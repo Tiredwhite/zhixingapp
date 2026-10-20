@@ -1,0 +1,31 @@
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile
+    restart: unless-stopped
+    env_file:
+      - ../server/.env
+    environment:
+      APP_ENV: production
+      QUOTA_DB: /app/data/quota.sqlite3
+    ports:
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - api-data:/app/data
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+
+volumes:
+  api-data:
+
