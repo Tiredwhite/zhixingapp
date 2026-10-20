@@ -1,0 +1,31 @@
+# Credentials and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.keystore
+*.jks
+
+# Runtime and build output
+node_modules/
+dist/
+unpackage/
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+*.pyc
+*.log
+*.sqlite3
+*.sqlite3-*
+.hbuilderx/
+.idea/
+.DS_Store
+
+# Document authoring intermediates and local verification
+.artifact_work/
+.local/
+test-results/
+playwright-report/
+
