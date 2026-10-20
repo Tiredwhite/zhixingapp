@@ -8,6 +8,8 @@
 *.jks
 *.apk
 *.aab
+/deliverables/*.zip
+/deliverables/*.bundle
 
 # Runtime and build output
 node_modules/

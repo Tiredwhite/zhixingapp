@@ -7,6 +7,7 @@ import argparse
 import hashlib
 import json
 import re
+import shutil
 import subprocess
 from pathlib import Path
 from zipfile import ZipFile
@@ -31,10 +32,20 @@ def main():
     if not tool.exists():
         with ZipFile(plugin/'apktool.jar') as archive:
             tool.write_bytes(archive.read('prebuilt/windows/aapt_64.exe'))
-    badging = subprocess.run([str(tool), 'dump', 'badging', str(apk)], capture_output=True, text=True,
+    apk_hash = hashlib.sha256(apk.read_bytes()).hexdigest()
+    tool_apk = apk
+    # The bundled Windows aapt rejects Unicode APK filenames. Inspect an exact
+    # hash-named copy while reporting the user's original delivery filename.
+    if not str(apk).isascii():
+        tool_apk = tool.parent / ('inspect-'+apk_hash+'.apk')
+        if not tool_apk.exists():
+            shutil.copyfile(apk, tool_apk)
+        if hashlib.sha256(tool_apk.read_bytes()).hexdigest() != apk_hash:
+            raise SystemExit('Inspection copy does not match the original APK.')
+    badging = subprocess.run([str(tool), 'dump', 'badging', str(tool_apk)], capture_output=True, text=True,
                              encoding='utf-8', errors='replace', check=True).stdout
     signature = subprocess.run([str(args.hbuilderx/'plugins/amazon-corretto/bin/java.exe'), '-jar',
-                                str(plugin/'apksigner.jar'), 'verify', '--verbose', '--print-certs', str(apk)],
+                                str(plugin/'apksigner.jar'), 'verify', '--verbose', '--print-certs', str(tool_apk)],
                                capture_output=True, text=True, encoding='utf-8', errors='replace')
     info = re.search(r"package: name='([^']+)' versionCode='([^']+)' versionName='([^']+)'", badging)
     if not info:
@@ -76,7 +87,7 @@ def main():
               and not (set(permissions)-allowed) and not file_hits and not value_hits and not embedded_signing
               and corrupt is None)
     report = {
-        'apk': apk.name, 'bytes': apk.stat().st_size, 'sha256': hashlib.sha256(apk.read_bytes()).hexdigest(),
+        'apk': apk.name, 'bytes': apk.stat().st_size, 'sha256': apk_hash,
         'package':info.group(1), 'version_code':info.group(2), 'version_name':info.group(3), 'app_ids':app_ids,
         'min_sdk':re.search(r"sdkVersion:'([^']+)'",badging).group(1),
         'target_sdk':re.search(r"targetSdkVersion:'([^']+)'",badging).group(1),

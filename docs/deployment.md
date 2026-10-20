@@ -74,6 +74,8 @@ DCloud开发者中心的安卓云证书状态已确认为“证书已生成”�
 
 安装包生成后执行 `server\.venv\Scripts\python.exe scripts/inspect-android.py <APK路径> --output .local/release/android-inspection.json`，核对实际签名、AppID、包名、架构、权限及已知秘密值。该检查不能代替手机安装或完整安全审计。
 
+18:20权限精简版APK生成，检查全部通过，交付到 `deliverables/知行-0.1.0.apk`。最终权限仅为INTERNET、ACCESS_NETWORK_STATE及本应用signature级内部广播保护权限。详情和SHA256见 [版本交付记录](release-0.1.0.md)。本轮OrcaTerm终端标签关闭后需要重新连接，已向用户请求恢复连接；目前未将APK上传网站，不能声称已有公网APK下载地址。
+
 真机的 `127.0.0.1` 指向手机自身；请在“连接设置”填写云服务器 HTTPS 地址。当前后端只绑定电脑回环地址，默认不向局域网开放。
 
 ## 运行验证
