@@ -27,7 +27,7 @@ APK v2签名、ZIP CRC、身份及两种ARM架构检查通过。签名工具另�
 
 把APK传到本人安卓手机并安装。服务器地址填写 `https://tiredwhite.cn`，连接令牌从本机忽略文件 `.local/secrets/知行连接信息.txt` 获取，不使用DeepSeek模型密钥。真机步骤和记录表见 [安卓验收清单](android-acceptance.md)。
 
-HTTPS网页及后端已经在线。APK目前仅在本机交付目录，等待用户重新连接OrcaTerm后才能上传网站，未提供未经验证的公网下载链接。未做应用商店上架验收。
+HTTPS网页及后端已经在线。用户重新连接OrcaTerm后，已将同一安装包发布到 [安卓APK下载](https://tiredwhite.cn/downloads/zhixing-0.1.0.apk)。公网完整下载返回HTTP 200，实际下载20,447,068字节，SHA256与上述本机验签文件一致。仅公开APK，连接令牌、模型密钥和签名私钥未随安装包上传。未做应用商店上架验收。
 
 ## 课程资料状态
 

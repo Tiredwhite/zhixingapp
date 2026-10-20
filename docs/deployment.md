@@ -74,9 +74,9 @@ DCloud开发者中心的安卓云证书状态已确认为“证书已生成”�
 
 安装包生成后执行 `server\.venv\Scripts\python.exe scripts/inspect-android.py <APK路径> --output .local/release/android-inspection.json`，核对实际签名、AppID、包名、架构、权限及已知秘密值。该检查不能代替手机安装或完整安全审计。
 
-18:20权限精简版APK生成，检查全部通过，交付到 `deliverables/知行-0.1.0.apk`。最终权限仅为INTERNET、ACCESS_NETWORK_STATE及本应用signature级内部广播保护权限。详情和SHA256见 [版本交付记录](release-0.1.0.md)。本轮OrcaTerm终端标签关闭后需要重新连接，已向用户请求恢复连接；目前未将APK上传网站，不能声称已有公网APK下载地址。
+18:20权限精简版APK生成，检查全部通过，交付到 `deliverables/知行-0.1.0.apk`。最终权限仅为INTERNET、ACCESS_NETWORK_STATE及本应用signature级内部广播保护权限。详情和SHA256见 [版本交付记录](release-0.1.0.md)。用户重新连接OrcaTerm后，仅上传该APK至服务器，核对SHA256并原子发布到 `/var/www/zhixing/downloads/zhixing-0.1.0.apk`（目录755、文件644）。公网 [安卓APK下载](https://tiredwhite.cn/downloads/zhixing-0.1.0.apk) 完整下载验证HTTP 200、20,447,068字节，SHA256与本机验签文件一致。未更改现有Nginx配置；未公开源码、连接令牌、模型密钥或签名私钥。
 
-真机的 `127.0.0.1` 指向手机自身；请在“连接设置”填写云服务器 HTTPS 地址。当前后端只绑定电脑回环地址，默认不向局域网开放。
+真机的 `127.0.0.1` 指向手机自身；请在“连接设置”填写 `https://tiredwhite.cn` 和应用连接令牌。本机开发后端只绑定电脑回环地址；线上后端绑定服务器的127.0.0.1:8002，通过Nginx提供HTTPS访问。
 
 ## 运行验证
 
