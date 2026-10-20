@@ -1,0 +1,12 @@
+{
+  "pages": [
+    { "path": "pages/home/index", "style": { "navigationStyle": "custom" } },
+    { "path": "pages/review/index", "style": { "navigationStyle": "custom" } },
+    { "path": "pages/tasks/index", "style": { "navigationStyle": "custom" } }
+  ],
+  "globalStyle": {
+    "navigationBarTextStyle": "black",
+    "navigationBarTitleText": "知行",
+    "backgroundColor": "#f5f5ef"
+  }
+}

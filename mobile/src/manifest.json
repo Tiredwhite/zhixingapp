@@ -1,0 +1,23 @@
+{
+  "name": "知行",
+  "appid": "",
+  "description": "校园通知解析与行动规划助手",
+  "versionName": "0.1.0",
+  "versionCode": "100",
+  "transformPx": false,
+  "vueVersion": "3",
+  "app-plus": {
+    "usingComponents": true,
+    "nvueStyleCompiler": "uni-app",
+    "compilerVersion": 3,
+    "splashscreen": { "alwaysShowBeforeRender": true, "waiting": true, "autoclose": true, "delay": 0 },
+    "modules": {},
+    "distribute": {
+      "android": {
+        "permissions": ["<uses-permission android:name=\"android.permission.INTERNET\"/>", "<uses-permission android:name=\"android.permission.ACCESS_NETWORK_STATE\"/>"]
+      }
+    }
+  },
+  "h5": { "title": "知行 · 校园通知助手", "router": { "mode": "hash" } },
+  "uniStatistics": { "enable": false }
+}
