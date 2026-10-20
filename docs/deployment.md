@@ -56,11 +56,11 @@ npm run build:app
 
 `mobile/dist/build/app` 是编译后的 App 资源，**不是 APK**。源码可在 HBuilderX 中编辑；按照编译器输出提示，可将该资源目录导入 HBuilderX 运行。真机调试前确认 HBuilderX 的 Node 路径为本机 Node 20+，并启用安卓手机开发者选项与USB调试。
 
-最终打包需使用本人的 DCloud AppID、Android包名和签名配置。`src/manifest.json` 的 appid 当前留空，不伪造他人的应用ID。申请或填写AppID后，再执行真机运行和发行打包；签名文件和密码不提交仓库。
+用户登录本人DCloud账号后，已创建uni-app类型应用“知行”，AppID为 `__UNI__435D6C0`。该ID已写入 `src/manifest.json` 并在重新编译的App资源中核对。签名文件和密码不提交仓库。
 
 用户已确认使用安卓手机。当前预设包名为 `cn.tiredwhite.zhixing`，支持 `arm64-v8a` 和 `armeabi-v7a`。原有“知”字品牌标记已导出72/96/144/192像素安卓图标并写入manifest，App资源重新编译通过。配置不在启动时主动申请设备电话信息或外部存储权限；最终APK的实际权限仍需打包后核对。
 
-DCloud开发者中心已在右侧浏览器打开，等待用户登录后创建或选用本人AppID。HBuilderX也须使用有该AppID打包权限的账号。当前官方已下线公共测试证书，不选择该旧选项；后续采用账号云证书或自有证书。参考：[AppID管理](https://uniapp.dcloud.net.cn/dev/app/introduction.html)、[Android云打包证书](https://ask.dcloud.net.cn/article/35985)。
+DCloud开发者中心已提交本应用的安卓云证书生成请求，状态为“证书生成中”。HBuilderX也须登录该AppID所有者或有权限的同一账号；已请求用户在本机完成登录。当前官方已下线公共测试证书，不选择该旧选项；后续采用账号云证书或自有证书。尚未提交云打包、购买次数或生成APK。参考：[AppID管理](https://uniapp.dcloud.net.cn/dev/app/introduction.html)、[Android云打包证书](https://ask.dcloud.net.cn/article/35985)。
 
 真机的 `127.0.0.1` 指向手机自身；请在“连接设置”填写云服务器 HTTPS 地址。当前后端只绑定电脑回环地址，默认不向局域网开放。
 
