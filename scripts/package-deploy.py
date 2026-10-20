@@ -21,7 +21,7 @@ def main():
         for item in sorted(folder.rglob("*")):
             if not item.is_file() or "__pycache__" in item.parts:
                 continue
-            if item.name.startswith(".env") or item.suffix in {".pyc", ".pem", ".key"}:
+            if item.name.startswith(".env") or item.suffix in {".pyc", ".pem", ".key", ".jks", ".keystore"}:
                 raise SystemExit("Unexpected secret or runtime file in release input")
             entries[f"{target}/{item.relative_to(folder).as_posix()}"] = item.read_bytes()
     for name in [
@@ -35,7 +35,8 @@ def main():
         "知行部署准备包\n"
         "web/ 为已构建的静态网页；app-resources/ 为App资源，不是APK。\n"
         "未包含模型密钥、访问令牌、数据库或签名文件。\n"
-        "这是部署准备包，尚未在目标服务器验证。\n"
+        "目标服务器已有部署验收记录，见 docs/deployment.md 与 docs/testing.md。\n"
+        "当前归档用于重建或迁移，每次安装仍须核对实际环境。\n"
         "先核对服务器环境和依赖审查记录，再按 docs/deployment.md 配置。\n"
         "inspect-server.sh 只读取环境信息，不安装或重启服务。\n"
     ).encode("utf-8")

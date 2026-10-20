@@ -6,6 +6,8 @@
 *.key
 *.keystore
 *.jks
+*.apk
+*.aab
 
 # Runtime and build output
 node_modules/
