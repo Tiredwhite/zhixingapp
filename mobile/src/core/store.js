@@ -1,4 +1,4 @@
-import { uid } from './dates.js';
+import { uid, validDate } from './dates.js';
 
 const KEYS = ['zhixing.snapshot.a', 'zhixing.snapshot.b'];
 const clone = (value) => JSON.parse(JSON.stringify(value));
@@ -22,6 +22,16 @@ function validateState(data) {
   if (!Array.isArray(data.notices) || !Array.isArray(data.tasks) || data.notices.length > 100 || data.tasks.length > 200) throw new Error('数据格式或容量不正确');
   if (!data.draft || typeof data.draft.text !== 'string' || typeof data.draft.id !== 'string' || data.draft.text.length > 2000) throw new Error('草稿格式不正确');
   if (!data.connection || typeof data.connection.apiBase !== 'string' || typeof data.connection.token !== 'string') throw new Error('连接配置不正确');
+  if (data.connection.apiBase.length > 200 || data.connection.token.length > 300) throw new Error('连接配置过长');
+  if (typeof data.draft.source_time !== 'string' || data.draft.source_time.length > 40) throw new Error('发布时间格式不正确');
+  if (data.workflow !== null) {
+    const flow = data.workflow;
+    if (!flow || typeof flow.notice_id !== 'string' || typeof flow.text !== 'string' || flow.text.length > 2000 || !['ai', 'manual', 'example'].includes(flow.mode) || !Array.isArray(flow.items) || flow.items.length > 5) throw new Error('核对页数据格式不正确');
+    for (const item of flow.items) {
+      if (typeof item.id !== 'string' || typeof item.action !== 'string' || !Array.isArray(item.materials) || !Array.isArray(item.review_reasons)) throw new Error('候选事项格式不正确');
+      if (item.due_at && typeof item.due_at !== 'string') throw new Error('候选时间格式不正确');
+    }
+  }
   const ids = new Set();
   for (const notice of data.notices) {
     if (typeof notice.id !== 'string' || typeof notice.text !== 'string' || notice.text.length > 2000 || ids.has(notice.id)) throw new Error('通知格式不正确');
@@ -31,6 +41,9 @@ function validateState(data) {
   for (const task of data.tasks) {
     if (typeof task.id !== 'string' || !task.title || typeof task.title !== 'string' || task.title.length > 60 || !['pending', 'done'].includes(task.status) || !ids.has(task.notice_id) || taskIds.has(task.id)) throw new Error('待办格式不正确');
     if (task.due_at && !Number.isFinite(Date.parse(task.due_at))) throw new Error('待办时间不正确');
+    if (task.due_date && !validDate(task.due_date)) throw new Error('待办日期不正确');
+    if (!Array.isArray(task.materials) || task.materials.length > 10 || task.materials.some((m) => typeof m !== 'string' || m.length > 200)) throw new Error('材料格式不正确');
+    if (task.location != null && (typeof task.location !== 'string' || task.location.length > 100)) throw new Error('地点格式不正确');
     taskIds.add(task.id);
   }
   return data;

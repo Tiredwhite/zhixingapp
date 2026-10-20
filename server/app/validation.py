@@ -43,6 +43,13 @@ def parse_due(text: str | None, source_time: datetime | None):
             return day.date().isoformat(), None, reasons + ['只有日期，没有明确时刻']
         period, hour, minute = clocks[0].groups()
         hour, minute = int(hour), int(minute or 0)
+        suffix = text[clocks[0].end():]
+        if suffix.startswith('半'):
+            minute = 30
+        elif suffix.startswith('一刻'):
+            minute = 15
+        elif suffix.startswith('三刻'):
+            minute = 45
         if period in ['下午', '晚上'] and 1 <= hour < 12:
             hour += 12
         if period == '上午' and hour == 12:

@@ -17,6 +17,7 @@ from conftest import model_result
     ('2026年10月23日或2026年10月24日', None, None, None),
     ('明天18:00', datetime.fromisoformat('2026-10-20T09:00:00+08:00'), '2026-10-21', '2026-10-21T18:00:00+08:00'),
     ('下周一下午3点', datetime.fromisoformat('2026-10-20T09:00:00+08:00'), '2026-10-26', '2026-10-26T15:00:00+08:00'),
+    ('2026年10月23日下午3点半', None, '2026-10-23', '2026-10-23T15:30:00+08:00'),
 ])
 def test_date_rules(text, source, date, time):
     actual_date, actual_time, _ = parse_due(text, source)

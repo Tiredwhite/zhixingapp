@@ -96,3 +96,11 @@ test('capacity limit never discards existing tasks', () => {
   assert.equal(store.state.tasks.length, 200);
 });
 
+test('malformed imported fields are rejected even when checksum was recomputed', () => {
+  const store = createStore(memory()); store.saveTasks(workflow, [action]);
+  const backup = JSON.parse(store.exportBackup());
+  backup.data.tasks[0].materials = 'not an array'; backup.checksum = checksum(JSON.stringify(backup.data));
+  assert.throws(() => store.restoreBackup(JSON.stringify(backup)), /材料格式/);
+  assert.deepEqual(store.state.tasks[0].materials, []);
+});
+

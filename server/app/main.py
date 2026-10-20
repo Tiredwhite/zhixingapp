@@ -18,11 +18,19 @@ from .schemas import ParseRequest, ParseResponse
 from .service import ParseService
 
 logger = logging.getLogger('zhixing')
+logger.setLevel(logging.INFO)
+if not logger.handlers:
+    handler = logging.StreamHandler()
+    handler.setFormatter(logging.Formatter('%(asctime)s %(levelname)s %(message)s'))
+    logger.addHandler(handler)
+logger.propagate = False
 
 
 def create_app(settings: Settings | None = None, model_transport=None) -> FastAPI:
     settings = settings or Settings()
-    app = FastAPI(title='知行 API', version='0.1.0')
+    app = FastAPI(title='知行 API', version='0.1.0',
+                  docs_url='/docs' if settings.app_env == 'development' else None,
+                  redoc_url=None, openapi_url='/openapi.json' if settings.app_env == 'development' else None)
     app.state.settings = settings
     quota_path = Path(settings.quota_db)
     if not quota_path.is_absolute():

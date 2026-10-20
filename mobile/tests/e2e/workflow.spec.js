@@ -1,0 +1,72 @@
+import { test, expect } from '@playwright/test';
+import { mkdir } from 'node:fs/promises';
+
+test('example review persistence editing completion and offline use', async ({ page, context }) => {
+  const errors = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  await mkdir('../.local/screenshots', { recursive: true });
+  await page.goto('/');
+  await expect(page.locator('.hero-title')).toContainText('清楚安排');
+  await page.screenshot({ path: '../.local/screenshots/home-desktop.png', fullPage: true });
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({ path: '../.local/screenshots/home-mobile.png', fullPage: true });
+  await page.locator('.example-link').click();
+  await expect(page.locator('.candidate-card')).toHaveCount(2);
+  await expect(page.locator('.review-intro .tag')).toHaveText('预置示例');
+  await expect(page.locator('.save-panel .primary-button')).toHaveAttribute('disabled', 'true');
+  await page.locator('.evidence-button').first().click();
+  await expect(page.locator('.highlighted').first()).toBeVisible();
+  await page.locator('.modal-card [aria-label="关闭原文"]').click();
+  await page.screenshot({ path: '../.local/screenshots/review-mobile.png', fullPage: true });
+  await page.locator('.confirmation-row').click();
+  await page.locator('.save-panel .primary-button').click();
+  await expect(page.locator('.task-card')).toHaveCount(2);
+  await page.reload();
+  await expect(page.locator('.task-card')).toHaveCount(2);
+  await context.setOffline(true);
+  await page.locator('.task-check').first().click();
+  await expect(page.locator('.task-card.completed')).toHaveCount(1);
+  await page.locator('.task-actions .text-button').filter({ hasText: '编辑' }).first().click();
+  await page.locator('.modal-card input').first().fill('离线修改后的待办');
+  await page.locator('.modal-card .primary-button').filter({ hasText: '保存修改' }).click();
+  await expect(page.locator('.task-title').filter({ hasText: '离线修改后的待办' })).toHaveCount(1);
+  await context.setOffline(false);
+  await page.reload();
+  await expect(page.locator('.task-card.completed')).toHaveCount(1);
+  await expect(page.locator('.task-title').filter({ hasText: '离线修改后的待办' })).toHaveCount(1);
+  await page.screenshot({ path: '../.local/screenshots/tasks-mobile.png', fullPage: true });
+  expect(errors).toEqual([]);
+});
+
+test('live AI result can be reviewed and saved', async ({ page }) => {
+  test.skip(process.env.LIVE_AI_E2E !== '1', 'Opt-in: this test uses the configured model account');
+  await page.goto('/');
+  await page.locator('.sample-button').filter({ hasText: '课程提交' }).click();
+  await page.locator('.parse-button').click();
+  await expect(page.locator('.review-intro .tag')).toHaveText('真实 AI 解析', { timeout: 30000 });
+  await expect(page.locator('.candidate-card')).toHaveCount(2);
+  await expect(page.locator('.candidate-card').first().locator('input').nth(1)).toHaveValue('2026-10-23');
+  await expect(page.locator('.candidate-card').first().locator('input').nth(2)).toHaveValue('18:00');
+  await page.screenshot({ path: '../.local/screenshots/review-live-ai.png', fullPage: true });
+  await page.locator('.confirmation-row').click();
+  await page.locator('.save-panel .primary-button').click();
+  await expect(page.locator('.task-card')).toHaveCount(2);
+  await expect(page.locator('.task-list')).toContainText('AI 解析后核对');
+});
+
+test('API failure keeps text and allows explicit manual continuation', async ({ page }) => {
+  await page.route('**/api/v1/parse', (route) => route.fulfill({ status: 503, contentType: 'application/json', body: JSON.stringify({ code: 'MODEL_NOT_CONFIGURED', message: 'AI 尚未配置，请手动整理' }) }));
+  await page.goto('/');
+  const input = page.locator('textarea');
+  await input.fill('请提交项目书，截止时间另行通知。');
+  await page.locator('.parse-button').click();
+  await expect(page.locator('.inline-message')).toContainText('AI 尚未配置');
+  await expect(input).toHaveValue('请提交项目书，截止时间另行通知。');
+  await page.locator('.manual-button').click();
+  await expect(page.locator('.review-intro .tag')).toHaveText('手动整理');
+  await page.locator('.candidate-card input').first().fill('提交项目书');
+  await page.locator('.confirmation-row').click();
+  await page.locator('.save-panel .primary-button').click();
+  await expect(page.locator('.task-card')).toHaveCount(1);
+  await expect(page.locator('.task-list')).toContainText('手动整理');
+});
