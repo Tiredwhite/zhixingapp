@@ -17,7 +17,7 @@
 
 容器为非root用户运行。课程版本只运行一个API worker，请求缓存、并发计数和分钟限流在单进程内；不能直接增加worker冒充多实例高可用。SQLite每日总额度持久化，但本项目没有独立用户登录和商业级权限体系。
 
-本机尚未安装 Docker，因此容器构建和云服务器部署需要在目标环境验证；不能将本地 Web 测试称为云部署完成。
+本机尚未安装 Docker，容器部署路径未构建验证。当前云服务器采用下述已验证的原生systemd方案。
 
 ## 当前部署准备包
 
@@ -27,15 +27,17 @@
 
 无密钥部署包已上传到 `/home/ubuntu/zhixing-deploy.zip`，53项清单文件SHA256全部校验通过，并解压到新目录 `/home/ubuntu/zhixing-20261020`。当前锁定依赖中Starlette和pydantic-settings要求Python至少3.11，不能直接使用系统Python 3.10；已安装独立Python 3.13.16并在项目虚拟环境中安装锁定依赖。
 
-目标服务器临时运行验证通过：后端绑定 `127.0.0.1:8002`，`/healthz` 返回 `status=ok`、版本0.1.0、`ai_configured=false`。这只验证服务器可以运行后端，不代表真实AI联调或公网部署成功。临时验证进程在检查后结束。尚未上传模型密钥、配置公网API/证书、启用systemd或切换现有站点。
+目标服务器先通过无密钥临时运行检查，随后结束临时进程。用户明确授权密钥上传及Let's Encrypt协议后，将生产配置放入私有项目目录 `server/.env`，权限600，父项目目录权限700。正式 `zhixing.service` 已启用，仍只绑定 `127.0.0.1:8002`。
 
 `deploy/inspect-server.sh` 为只读环境检查，可在连接恢复后使用。必须先核对目标端口、Python/Docker、现有Nginx站点及证书，再选择部署方式。另见 [依赖审查状态](dependency-review.md)，当前包尚未完成依赖安全验收。
 
-当前服务器也可使用原生systemd方式：独立Python3.13虚拟环境安装锁定依赖，先创建可写的 `server/data`，再调整 `deploy/zhixing.service.example`。该示例绑定 `127.0.0.1:8002`，避免已占用的8000端口，且不替换系统Python。启用前必须在服务器 `server/.env` 配置生产访问令牌和模型密钥，再校验反代与证书。此文件目前仅为模板，尚未在目标服务器启用。
+当前服务器使用原生systemd方式：独立Python3.13虚拟环境安装锁定依赖，创建可写的 `server/data`，采用 `deploy/zhixing.service.example` 的服务配置。绑定回环地址避免已占用的8000端口，没有替换系统Python或原有服务。Nginx静态文件单独位于 `/var/www/zhixing`；站点文件为 `/etc/nginx/sites-available/zhixing`，通过同名符号链接启用。
 
-域名Nginx配置与systemd文件已在目标项目的 `deploy` 目录暂存，未启用。现有Nginx配置 `nginx -t` 检查通过，Certbot 1.21.0已从Ubuntu软件源安装，但未申请证书。systemd静态检查会同时报告系统原有其他单元的警告，不能把此输出称为本项目已运行。
+站点 `https://tiredwhite.cn/` 已上线，普通HTTP自动301跳转HTTPS。Certbot1.21.0签发证书，当前证书到期日2027-01-18。HTTP挑战目录保留在 `/var/www/html/.well-known/acme-challenge/`，不被重定向覆盖；证书模拟续期通过。`deploy/renew-nginx.sh` 安装到续期deploy钩子中，续期后检查并重载Nginx。
 
-本机生产环境配置已准备并验证，保存在忽略目录 `.local/secrets/server.production.env`，含现有模型密钥及独立随机访问令牌。等待用户明确确认后才通过OrcaTerm上传到服务器私有目录；不在聊天中输出值。免费证书申请还需要用户确认Let's Encrypt订户协议。
+生产验证通过：未带令牌请求返回401，授权真实AI请求返回200并正确识别2026-10-23 18:00截止时间，`/docs` 返回404。公网浏览器使用HTTPS成功完成真实AI解析，显示原文依据。截图保存在 `.local/screenshots`。
+
+本机生产环境配置保存在忽略目录 `.local/secrets/server.production.env`。单独的 `.local/secrets/知行连接信息.txt` 只给出应用网址和连接令牌，方便在手机填写，不包含模型密钥。这些文件不进入仓库或部署归档。更换模型密钥或访问令牌后重启 `zhixing.service`；更换连接令牌后，需要更新各设备的连接设置。
 
 ## HBuilderX
 
