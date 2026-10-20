@@ -23,9 +23,19 @@
 
 先在 `mobile` 完成 Web 与 App 资源构建，再在仓库根运行 `python scripts/package-deploy.py`，生成 `.local/release/zhixing-deploy.zip`。包内包含静态网页、App资源、后端源码和部署示例，不包含本机 `.env`、访问令牌、数据库或签名文件；`SHA256.json` 可核对包内文件。App资源不等于可安装APK。
 
-目标域名为用户提供的 `tiredwhite.cn`，目标Ubuntu服务器地址为 `123.207.238.92`。尚未通过已登录的 OrcaTerm 读取目标环境：浏览器与电脑操作运行时在初始化阶段返回 `failed to write kernel assets`。没有执行云端安装、配置覆盖或服务重启。
+目标域名为用户提供的 `tiredwhite.cn`，目标Ubuntu服务器地址为 `123.207.238.92`。用户重启Codex后，浏览器操作恢复，已通过右侧OrcaTerm连接并读取环境：Ubuntu 22.04.5、Python 3.10.12、约42GB可用磁盘、Nginx运行中，未发现Docker。80与8081由Nginx监听，8000由已有Python服务占用，因此本项目应另选回环端口。默认80站点根目录为 `/var/www/html`，8081站点为 `/var/www/h5-demo`。
+
+无密钥部署包已上传到 `/home/ubuntu/zhixing-deploy.zip`，53项清单文件SHA256全部校验通过，并解压到新目录 `/home/ubuntu/zhixing-20261020`。当前锁定依赖中Starlette和pydantic-settings要求Python至少3.11，不能直接使用系统Python 3.10；已安装独立Python 3.13.16并在项目虚拟环境中安装锁定依赖。
+
+目标服务器临时运行验证通过：后端绑定 `127.0.0.1:8002`，`/healthz` 返回 `status=ok`、版本0.1.0、`ai_configured=false`。这只验证服务器可以运行后端，不代表真实AI联调或公网部署成功。临时验证进程在检查后结束。尚未上传模型密钥、配置公网API/证书、启用systemd或切换现有站点。
 
 `deploy/inspect-server.sh` 为只读环境检查，可在连接恢复后使用。必须先核对目标端口、Python/Docker、现有Nginx站点及证书，再选择部署方式。另见 [依赖审查状态](dependency-review.md)，当前包尚未完成依赖安全验收。
+
+当前服务器也可使用原生systemd方式：独立Python3.13虚拟环境安装锁定依赖，先创建可写的 `server/data`，再调整 `deploy/zhixing.service.example`。该示例绑定 `127.0.0.1:8002`，避免已占用的8000端口，且不替换系统Python。启用前必须在服务器 `server/.env` 配置生产访问令牌和模型密钥，再校验反代与证书。此文件目前仅为模板，尚未在目标服务器启用。
+
+域名Nginx配置与systemd文件已在目标项目的 `deploy` 目录暂存，未启用。现有Nginx配置 `nginx -t` 检查通过，Certbot 1.21.0已从Ubuntu软件源安装，但未申请证书。systemd静态检查会同时报告系统原有其他单元的警告，不能把此输出称为本项目已运行。
+
+本机生产环境配置已准备并验证，保存在忽略目录 `.local/secrets/server.production.env`，含现有模型密钥及独立随机访问令牌。等待用户明确确认后才通过OrcaTerm上传到服务器私有目录；不在聊天中输出值。免费证书申请还需要用户确认Let's Encrypt订户协议。
 
 ## HBuilderX
 

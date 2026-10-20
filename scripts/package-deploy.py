@@ -27,7 +27,7 @@ def main():
     for name in [
         "server/requirements.txt", "server/.env.example",
         "deploy/Dockerfile", "deploy/compose.yaml", "deploy/nginx.conf.example",
-        "deploy/inspect-server.sh", "docs/deployment.md", "docs/testing.md",
+        "deploy/inspect-server.sh", "deploy/zhixing.service.example", "docs/deployment.md", "docs/testing.md",
         "docs/dependency-review.md", ".dockerignore",
     ]:
         entries[name] = (ROOT / name).read_bytes()

@@ -1,0 +1,29 @@
+# Inspect and adjust these paths before installing. Does not replace existing services.
+[Unit]
+Description=Zhixing notice parsing API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/zhixing-20261020/server
+Environment=PYTHONUNBUFFERED=1
+Environment=PYTHONDONTWRITEBYTECODE=1
+Environment=APP_ENV=production
+ExecStart=/home/ubuntu/zhixing-20261020/server/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8002 --workers 1 --no-access-log
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=15
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/home/ubuntu/zhixing-20261020/server/data
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+MemoryMax=512M
+
+[Install]
+WantedBy=multi-user.target
