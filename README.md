@@ -22,5 +22,64 @@ HBuilderX 安装目录：`D:\code-app\HBuilderX.5.26.2026091802\HBuilderX`。在
 
 ## 开发状态
 
-项目已立项规划，正在建立可运行版本。以 `docs/development-log.md` 记录的实际实现与测试为准。
+本地版本已完成真实AI解析、核对与本地待办闭环。Web与Android App资源编译通过；已通过26项后端、15项本地逻辑、3项浏览器流程检查。APK安装、签名打包与云服务器部署尚未验收。详细结果见 `docs/testing.md`。
+
+## 本机启动
+
+当前环境已安装依赖并配置服务端密钥。运行：
+
+```powershell
+.\scripts\start-dev.ps1 -ImportHBuilder
+```
+
+打开 <http://127.0.0.1:5173>。健康检查为 <http://127.0.0.1:8000/healthz>。启动脚本在后台运行，日志位于 `.local`；若端口已有服务，它不会替换已有进程。
+
+修改 `server/.env` 后需要重启后端。不要在聊天、截图或仓库中粘贴模型密钥。
+
+## 新环境安装
+
+要求 Node 20+、Python 3.13，以及 Android 调试用 HBuilderX。
+
+```powershell
+python -m venv server/.venv
+server\.venv\Scripts\python.exe -m pip install -r server/requirements-dev.txt
+if (-not (Test-Path server/.env)) { Copy-Item server/.env.example server/.env }
+cd mobile
+npm ci
+```
+
+在本机服务端 `.env` 填写 `MODEL_API_KEY`。不要在移动端填写模型密钥；移动端连接远程后端时仅使用可撤销的应用访问令牌。
+
+## 验证与构建
+
+```powershell
+# 仓库根目录
+server\.venv\Scripts\python.exe -m pytest -c server/pytest.ini server/tests
+
+# mobile 目录
+npm test
+npm run build
+npm run build:app
+npm run test:e2e
+```
+
+浏览器测试需要5173前端与8000后端已启动，默认使用本机Edge。Linux环境可安装Playwright Chromium并设置 `PLAYWRIGHT_CHANNEL=chromium`。
+
+真实AI端到端测试默认跳过，避免无意消耗配额。如需显式运行：
+
+```powershell
+$env:LIVE_AI_E2E='1'
+npm run test:e2e
+```
+
+`dist/build/app` 是App资源，不是APK。HBuilderX配置、云服务器反代和打包边界见 `docs/deployment.md`。
+
+## 项目资料
+
+- `docs/requirements.md`：需求与验收边界。
+- `docs/testing.md`：真实测试结果与未完成项。
+- `docs/deployment.md`：部署、HBuilderX与真机调试。
+- `docs/ai-usage.md`：AI辅助范围和实际修订记录。
+- `docs/development-log.md`：开发过程。
+
 
