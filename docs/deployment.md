@@ -70,6 +70,10 @@ DCloud开发者中心的安卓云证书状态已确认为“证书已生成”�
 
 已按官方强制移除权限配置，在源码 `app-plus.distribute.android.excludePermissions` 显式排除12项不需要的权限。独立打包副本及标准CLI App资源构建已同步，17:56重新提交打包，尚待结果。最终包以 `scripts/inspect-android.py` 的实物检查为准。保留应用自定义的非导出广播保护权限，不把它误认为电话或媒体访问权限。参考：[移除Android权限](https://uniapp.dcloud.io/tutorial/app-nativeresource-android.html#移除android权限)。
 
+后续可复现的打包准备：在仓库根执行 `python scripts/prepare-android.py`，脚本复制最新源码到新的忽略目录，修正本次HBuilderX图标路径问题，并使用既有项目签名生成私有配置；不会自动提交云任务或覆盖正在打包的目录。按输出路径通过 `cli.exe project open --path <准备目录>` 导入，再执行 `cli.exe pack --config <私有配置路径>`。不要将私有配置发到聊天或提交仓库。新电脑必须先单独恢复原签名证书和凭据，不能为了更新临时换证书。
+
+安装包生成后执行 `server\.venv\Scripts\python.exe scripts/inspect-android.py <APK路径> --output .local/release/android-inspection.json`，核对实际签名、AppID、包名、架构、权限及已知秘密值。该检查不能代替手机安装或完整安全审计。
+
 真机的 `127.0.0.1` 指向手机自身；请在“连接设置”填写云服务器 HTTPS 地址。当前后端只绑定电脑回环地址，默认不向局域网开放。
 
 ## 运行验证
