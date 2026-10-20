@@ -19,6 +19,14 @@
 
 本机尚未安装 Docker，因此容器构建和云服务器部署需要在目标环境验证；不能将本地 Web 测试称为云部署完成。
 
+## 当前部署准备包
+
+先在 `mobile` 完成 Web 与 App 资源构建，再在仓库根运行 `python scripts/package-deploy.py`，生成 `.local/release/zhixing-deploy.zip`。包内包含静态网页、App资源、后端源码和部署示例，不包含本机 `.env`、访问令牌、数据库或签名文件；`SHA256.json` 可核对包内文件。App资源不等于可安装APK。
+
+目标域名为用户提供的 `tiredwhite.cn`，目标Ubuntu服务器地址为 `123.207.238.92`。尚未通过已登录的 OrcaTerm 读取目标环境：浏览器与电脑操作运行时在初始化阶段返回 `failed to write kernel assets`。没有执行云端安装、配置覆盖或服务重启。
+
+`deploy/inspect-server.sh` 为只读环境检查，可在连接恢复后使用。必须先核对目标端口、Python/Docker、现有Nginx站点及证书，再选择部署方式。另见 [依赖审查状态](dependency-review.md)，当前包尚未完成依赖安全验收。
+
 ## HBuilderX
 
 项目源码已通过以下命令导入本机 HBuilderX：
