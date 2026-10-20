@@ -12,7 +12,9 @@ function baseURL(connection) {
 export function request(connection, path, { method = 'GET', data, timeout = 25000 } = {}) {
   let task;
   let cancelled = false;
+  let rejectPending;
   const promise = new Promise((resolve, reject) => {
+    rejectPending = reject;
     let url;
     try { url = baseURL(connection) + path; } catch (error) { reject(error); return; }
     task = uni.request({
@@ -32,7 +34,7 @@ export function request(connection, path, { method = 'GET', data, timeout = 2500
       },
     });
   });
-  return { promise, cancel() { cancelled = true; task?.abort(); } };
+  return { promise, cancel() { cancelled = true; const error = new Error('已取消解析，原文已保留'); error.cancelled = true; rejectPending?.(error); task?.abort(); } };
 }
 
 export const health = (connection) => request(connection, '/healthz', { timeout: 4000 }).promise;

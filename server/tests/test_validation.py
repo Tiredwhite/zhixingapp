@@ -47,6 +47,6 @@ def test_model_machine_date_cannot_override_source(payload):
     data = model_result()
     data['items'][0]['due_at'] = '2026-12-30T18:00:00+08:00'
     items, _ = validate_result(ModelResult.model_validate(data), ParseRequest.model_validate(payload))
-    assert items[0].due_at is None
+    assert items[0].due_at == '2026-10-23T18:00:00+08:00'
     assert any('不一致' in r for r in items[0].review_reasons)
 

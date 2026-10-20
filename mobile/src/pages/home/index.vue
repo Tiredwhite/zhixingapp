@@ -37,7 +37,7 @@
 
 <script setup>
 import { computed, ref, watch } from 'vue';
-import { onShow, onUnload } from '@dcloudio/uni-app';
+import { onShow, onHide, onUnload } from '@dcloudio/uni-app';
 import AppHeader from '../../components/AppHeader.vue';
 import AppNav from '../../components/AppNav.vue';
 import ConnectionPanel from '../../components/ConnectionPanel.vue';
@@ -56,6 +56,7 @@ const soonCount = computed(() => appState.tasks.filter((t) => dueState(t).classN
 let debounce, activeRequest, requestVersion = 0;
 watch([text, published], () => { clearTimeout(debounce); debounce = setTimeout(() => { try { repository.saveDraft(text.value, published.value); } catch (e) { errorMessage.value = e.message; } }, 500); });
 onShow(async () => { try { setHealth(await health(repository.state.connection)); } catch { aiReady.value = false; } });
+onHide(() => { clearTimeout(debounce); if (text.value !== repository.state.draft.text || published.value !== repository.state.draft.source_time) { try { persistDraft(); } catch (error) { errorMessage.value = error.message; } } });
 onUnload(() => { clearTimeout(debounce); requestVersion++; activeRequest?.cancel(); });
 function setHealth(value) { aiReady.value = Boolean(value?.ai_configured); }
 function fillSample(sample) { text.value = sample.text; published.value = ''; errorMessage.value = ''; }

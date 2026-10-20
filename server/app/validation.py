@@ -90,11 +90,9 @@ def validate_result(result: ModelResult, request: ParseRequest, now: datetime | 
         if item.due_at and due_at:
             try:
                 if datetime.fromisoformat(item.due_at) != datetime.fromisoformat(due_at):
-                    due_date, due_at = None, None
-                    date_reasons.append('模型日期与原文换算不一致，须手动确认')
+                    date_reasons.append('模型日期与原文不一致，已按原文重新换算，请核对')
             except ValueError:
-                due_date, due_at = None, None
-                date_reasons.append('模型日期格式不合法，须手动确认')
+                date_reasons.append('模型日期格式不合法，已按原文重新换算，请核对')
         if due_at and datetime.fromisoformat(due_at) < now:
             date_reasons.append('该截止时间已过去，请确认是否仍需办理')
         item.due_date, item.due_at = due_date, due_at

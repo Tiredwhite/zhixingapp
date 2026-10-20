@@ -112,7 +112,7 @@ export function createStore(adapter) {
         const previous = next.tasks.find((task) => task.id === id);
         const task = {
           ...clone(candidate), id, candidate_id: candidate.id, notice_id: notice.id,
-          title: candidate.action.trim(), origin_mode: workflow.mode,
+          title: candidate.action.trim(), origin_mode: candidate.origin_mode || workflow.mode,
           status: previous?.status || 'pending', created_at: previous?.created_at || new Date().toISOString(),
           updated_at: new Date().toISOString(),
         };
