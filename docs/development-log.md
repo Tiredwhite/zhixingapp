@@ -24,4 +24,5 @@
 - Let's Encrypt证书签发成功，Nginx启用tiredwhite.cn的HTTPS站点，HTTP跳转HTTPS。保留ACME挑战路径，安装续期后检查并重载Nginx的钩子，Certbot模拟续期成功。公网浏览器完成真实AI解析并核对日期、原文依据；未将部署验收样例保存为用户待办。
 - 用户确认手机为安卓。打开DCloud开发者中心等待用户登录，AppID仍为空。准备包名cn.tiredwhite.zhixing、ARM64/ARMv7架构和原有品牌图标，不主动请求电话信息/外部存储启动权限。重新编译App资源成功，四种图标尺寸与输出文件已核对；未提交云打包或生成APK。
 - 用户完成DCloud网页登录后，创建本人所有的uni-app应用“知行”，获得AppID __UNI__435D6C0并写入源码，重新编译App资源并核对ID。提交安卓云证书生成请求，等待完成；请求用户在本机HBuilderX登录同一账号。未购买打包次数或提交云打包。
+- 通过HBuilderX官方CLI安装app-safe-pack组件，返回安装成功。已核对编译后的AppID及约971KB资源体积，仍待本机HBuilderX账号登录和签名证书生成，不将资源构建称为APK生成。
 
