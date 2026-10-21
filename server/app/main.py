@@ -9,6 +9,7 @@ from fastapi import FastAPI, File, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from starlette.concurrency import run_in_threadpool
 
 from .auth import AccountStore, AuthRateLimiter
 from .config import SERVER_ROOT, Settings
@@ -30,7 +31,7 @@ logger.propagate = False
 
 def create_app(settings: Settings | None = None, model_transport=None) -> FastAPI:
     settings = settings or Settings()
-    app = FastAPI(title='知行 API', version='0.3.3',
+    app = FastAPI(title='知行 API', version='0.3.4',
                   docs_url='/docs' if settings.app_env == 'development' else None,
                   redoc_url=None, openapi_url='/openapi.json' if settings.app_env == 'development' else None)
     app.state.settings = settings
@@ -159,10 +160,10 @@ def create_app(settings: Settings | None = None, model_transport=None) -> FastAP
         authorize(request)
         try:
             raw = await file.read(MAX_DOCUMENT_BYTES + 1)
-            text, kind = extract_document(file.filename, raw)
+            text, kind, ocr_pages = await run_in_threadpool(extract_document, file.filename, raw)
         finally:
             await file.close()
-        return {'text': text, 'kind': kind, 'characters': len(text)}
+        return {'text': text, 'kind': kind, 'characters': len(text), 'ocr_pages': ocr_pages}
 
     @app.post('/api/v1/documents/extract-raw')
     async def extract_notice_document_raw(request: Request):
@@ -180,8 +181,8 @@ def create_app(settings: Settings | None = None, model_transport=None) -> FastAP
                 raise ApiError(413, 'DOCUMENT_TOO_LARGE', '文件不能超过 20 MB')
             chunks.append(chunk)
         raw = b''.join(chunks)
-        text, kind = extract_document(request.query_params.get('filename'), raw)
-        return {'text': text, 'kind': kind, 'characters': len(text)}
+        text, kind, ocr_pages = await run_in_threadpool(extract_document, request.query_params.get('filename'), raw)
+        return {'text': text, 'kind': kind, 'characters': len(text), 'ocr_pages': ocr_pages}
 
     @app.post('/api/v1/chat', response_model=ChatResponse)
     async def chat(payload: ChatRequest, request: Request):

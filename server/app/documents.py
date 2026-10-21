@@ -14,6 +14,8 @@ from .errors import ApiError
 MAX_DOCUMENT_BYTES = 20 * 1024 * 1024
 MAX_EXTRACTED_CHARS = 12000
 MAX_PDF_PAGES = 80
+MAX_OCR_PAGES = 5
+MIN_PAGE_TEXT_FOR_OCR = 40
 MAX_DOCX_ENTRIES = 1000
 MAX_DOCX_UNPACKED_BYTES = 64 * 1024 * 1024
 
@@ -23,16 +25,72 @@ def _normalize_text(value: str) -> str:
     return "\n".join(line for line in lines if line)
 
 
-def _extract_pdf(data: bytes) -> str:
+def _ocr_pdf_pages(data: bytes, page_numbers: list[int]) -> dict[int, str]:
+    tesseract = shutil.which("tesseract")
+    if not tesseract:
+        raise ApiError(503, "DOCUMENT_OCR_UNAVAILABLE", "服务器 OCR 组件暂未就绪，请稍后重试")
+    try:
+        import fitz
+    except ImportError as exc:
+        raise ApiError(503, "DOCUMENT_OCR_UNAVAILABLE", "服务器 OCR 组件暂未就绪，请稍后重试") from exc
+
+    recognized: dict[int, str] = {}
+    try:
+        with fitz.open(stream=data, filetype="pdf") as document:
+            with TemporaryDirectory(prefix="zhixing-ocr-") as temporary:
+                for number in page_numbers:
+                    page = document[number]
+                    image = Path(temporary) / f"page-{number + 1}.png"
+                    page.get_pixmap(dpi=180, colorspace=fitz.csGRAY, alpha=False).save(image)
+                    result = subprocess.run(
+                        [tesseract, str(image), "stdout", "-l", "chi_sim+eng", "--oem", "1", "--psm", "6"],
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE,
+                        timeout=8,
+                        check=False,
+                    )
+                    if result.returncode != 0:
+                        stderr = result.stderr.decode("utf-8", errors="replace")
+                        if "Failed loading language" in stderr or "Error opening data file" in stderr:
+                            raise ApiError(503, "DOCUMENT_OCR_UNAVAILABLE", "服务器缺少中文 OCR 语言包，请联系管理员配置后重试")
+                        raise ApiError(422, "DOCUMENT_OCR_FAILED", f"PDF 第 {number + 1} 页识别失败，请尝试更清晰的文档")
+                    recognized[number] = _normalize_text(result.stdout.decode("utf-8", errors="replace"))
+    except ApiError:
+        raise
+    except subprocess.TimeoutExpired as exc:
+        raise ApiError(422, "DOCUMENT_OCR_TIMEOUT", "PDF 页面识别超时，请拆分文档或尝试更清晰的文件") from exc
+    except OSError as exc:
+        raise ApiError(503, "DOCUMENT_OCR_UNAVAILABLE", "服务器 OCR 组件暂时无法运行，请稍后重试") from exc
+    except Exception as exc:
+        raise ApiError(422, "DOCUMENT_INVALID", "PDF 页面渲染失败，文件可能已损坏") from exc
+    return recognized
+
+
+def _extract_pdf(data: bytes) -> tuple[str, int]:
     try:
         reader = PdfReader(BytesIO(data), strict=False)
         if reader.is_encrypted and not reader.decrypt(""):
             raise ApiError(422, "DOCUMENT_ENCRYPTED", "PDF 已加密，暂时无法读取")
         if len(reader.pages) > MAX_PDF_PAGES:
             raise ApiError(422, "DOCUMENT_TOO_MANY_PAGES", "PDF 超过 80 页，请拆分后再导入")
-        return _normalize_text("\n".join(page.extract_text() or "" for page in reader.pages))
+        page_texts = [_normalize_text(page.extract_text() or "") for page in reader.pages]
+        candidates = [index for index, text in enumerate(page_texts) if len(text) < MIN_PAGE_TEXT_FOR_OCR]
+        if candidates:
+            import fitz
+
+            with fitz.open(stream=data, filetype="pdf") as document:
+                image_pages = [index for index in candidates if document[index].get_images(full=True)]
+            if len(image_pages) > MAX_OCR_PAGES:
+                raise ApiError(422, "DOCUMENT_OCR_TOO_MANY_PAGES", "扫描版 PDF 单次最多识别 5 页，请拆分后再导入")
+            if image_pages:
+                recognized = _ocr_pdf_pages(data, image_pages)
+                for index, text in recognized.items():
+                    page_texts[index] = "\n".join(part for part in (page_texts[index], text) if part)
+        return _normalize_text("\n".join(page_texts)), len(image_pages) if candidates else 0
     except ApiError:
         raise
+    except ImportError as exc:
+        raise ApiError(503, "DOCUMENT_OCR_UNAVAILABLE", "服务器 OCR 组件暂未就绪，请稍后重试") from exc
     except Exception as exc:
         raise ApiError(422, "DOCUMENT_INVALID", "PDF 文件损坏或格式不受支持") from exc
 
@@ -83,14 +141,15 @@ def _extract_doc(data: bytes) -> str:
         raise ApiError(422, "DOCUMENT_INVALID", "Word 文件损坏或格式不受支持") from exc
 
 
-def extract_document(filename: str | None, data: bytes) -> tuple[str, str]:
+def extract_document(filename: str | None, data: bytes) -> tuple[str, str, int]:
     extension = PurePath(filename or "").suffix.lower()
     if len(data) > MAX_DOCUMENT_BYTES:
         raise ApiError(413, "DOCUMENT_TOO_LARGE", "文件不能超过 20 MB")
     if not data:
         raise ApiError(400, "DOCUMENT_EMPTY", "所选文件为空")
+    ocr_pages = 0
     if extension == ".pdf":
-        text = _extract_pdf(data)
+        text, ocr_pages = _extract_pdf(data)
         kind = "PDF"
     elif extension == ".docx":
         text = _extract_docx(data)
@@ -101,7 +160,7 @@ def extract_document(filename: str | None, data: bytes) -> tuple[str, str]:
     else:
         raise ApiError(415, "DOCUMENT_UNSUPPORTED", "目前支持 PDF、.docx 和 .doc Word 文档")
     if not text:
-        raise ApiError(422, "DOCUMENT_NO_TEXT", "未提取到可选择的文字，扫描版 PDF 暂不支持 OCR")
+        raise ApiError(422, "DOCUMENT_NO_TEXT", "未提取到可识别的文字，请确认文档清晰、未加密且内容完整")
     if len(text) > MAX_EXTRACTED_CHARS:
         raise ApiError(413, "DOCUMENT_TEXT_TOO_LONG", "提取文字超过 12000 字，请先拆分或删去无关页面")
-    return text, kind
+    return text, kind, ocr_pages

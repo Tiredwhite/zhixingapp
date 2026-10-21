@@ -76,7 +76,7 @@ function decodeDocumentResponse(response) {
     400: '服务器没有收到完整文档，请重新选择文件；若仍失败，请先在文件管理器确认文档可以打开',
     413: '文件超过 20 MB，请压缩或拆分后再导入',
     415: '格式暂不支持，请选择 PDF、.docx 或 .doc 文件',
-    422: '无法从文档中提取文字，请确认不是扫描图片或损坏文件',
+    422: '无法识别文档文字，请确认文件清晰、未加密且内容完整',
     503: '文档服务暂时不可用，请稍后重试',
   };
   const error = new Error(data?.message || fallbackMessages[response.statusCode] || `文档读取失败（${response.statusCode}）`);
@@ -102,7 +102,7 @@ export function extractDocument(connection, filePath, filename = '') {
             return;
           }
           uni.request({
-            url: `${url}-raw?filename=${encodeURIComponent(filename)}`, method: 'POST', data, timeout: 35000,
+            url: `${url}-raw?filename=${encodeURIComponent(filename)}`, method: 'POST', data, timeout: 55000,
             header: { 'Content-Type': 'application/octet-stream', ...authorizationHeader(connection) },
             success(response) { try { resolve(decodeDocumentResponse(response)); } catch (error) { reject(error); } },
             fail(error) { reject(new Error(error.errMsg?.includes('timeout') ? '文档处理超时，请尝试较小的文件' : '文档上传失败，请检查服务器连接')); },
@@ -112,7 +112,7 @@ export function extractDocument(connection, filePath, filename = '') {
       return;
     }
     uni.uploadFile({
-      url, filePath, name: 'file', timeout: 35000,
+      url, filePath, name: 'file', timeout: 55000,
       header: authorizationHeader(connection),
       success(response) {
         try { resolve(decodeDocumentResponse(response)); } catch (error) { reject(error); }

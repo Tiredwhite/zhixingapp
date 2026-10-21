@@ -13,11 +13,11 @@
     </view>
     <view class="download-features">
       <view class="feature-card"><view class="feature-number">01</view><Icon name="spark" :size="22" /><text class="feature-title">AI 深读，不止摘关键句</text><text class="feature-copy">梳理办理步骤、解释理由、引用原文，并指出通知里还没说清的问题。</text></view>
-      <view class="feature-card"><view class="feature-number">02</view><Icon name="paper" :size="22" /><text class="feature-title">粘贴或导入文档</text><text class="feature-copy">从 Word .doc、.docx 或可选文字的 PDF 提取通知内容，编辑后再交给 AI 整理。</text></view>
+      <view class="feature-card"><view class="feature-number">02</view><Icon name="paper" :size="22" /><text class="feature-title">粘贴或导入文档</text><text class="feature-copy">从 Word .doc、.docx 或 PDF 提取通知内容；扫描版 PDF 会尝试中文 OCR 识别，再交给 AI 整理。</text></view>
       <view class="feature-card"><view class="feature-number">03</view><Icon name="calendar" :size="22" /><text class="feature-title">待办可加入手机日历</text><text class="feature-copy">为截止事项生成系统日历日程和提醒；待办本地保存，断网也能管理。</text></view>
     </view>
     <view class="download-howto"><view><text class="eyebrow">GET STARTED</text><text class="section-title">三步开始使用</text></view><view class="steps"><view><text>1</text><text>下载并安装 Android APK</text></view><view><text>2</text><text>在“个人中心”配置知行服务器</text></view><view><text>3</text><text>粘贴通知或导入文件，开始整理</text></view></view></view>
-    <view class="download-note"><Icon name="shield" :size="17" color="#708866" /><text>AI 整理前会将你提交的通知文本发送到配置的 AI 服务。保存的待办和昵称留在手机本地。扫描版 PDF 暂不支持 OCR。</text></view>
+    <view class="download-note"><Icon name="shield" :size="17" color="#708866" /><text>AI 整理前会将你提交的通知文本发送到配置的 AI 服务。保存的待办和昵称留在手机本地。扫描版 PDF 每次最多 OCR 识别 5 页，效果受图片清晰度影响。</text></view>
     <view class="download-footer"><text>知行 · 校园通知助手</text><text>Android {{ APP_VERSION }}</text></view>
   </view>
   <!-- #endif -->

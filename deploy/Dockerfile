@@ -4,7 +4,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
 WORKDIR /app
 COPY server/requirements.txt ./requirements.txt
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends antiword \
+    && apt-get install -y --no-install-recommends antiword tesseract-ocr tesseract-ocr-chi-sim tesseract-ocr-eng \
     && rm -rf /var/lib/apt/lists/* \
     && pip install --no-cache-dir -r requirements.txt \
     && groupadd --gid 10001 zhixing \
