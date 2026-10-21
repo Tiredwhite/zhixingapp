@@ -71,15 +71,29 @@ export function addTaskToCalendar(task, { success, fail }) {
     catch (error) { fail(error); }
     return;
   }
-  uni.addPhoneCalendar({
-    title: task.title,
-    startTime: Math.floor(timing.startTime / 1000),
-    endTime: Math.floor(timing.endTime / 1000),
-    location: task.location || '',
-    notes: `知行校园通知助手 · ${timing.reminderMinutes ? '截止前30分钟提醒' : '当天09:00提醒'}`,
-    alarm: true,
-    alarmOffset: timing.reminderMinutes * 60,
-    success: (result) => success(result),
-    fail: (error) => fail(new Error(calendarErrorMessage(error))),
-  });
+  const useSystemEditor = (nativeError) => {
+    try {
+      success(openSystemCalendarEditor(task, timing));
+    } catch (fallbackError) {
+      fail(new Error(calendarErrorMessage(nativeError || fallbackError)));
+    }
+  };
+
+  try {
+    uni.addPhoneCalendar({
+      title: task.title,
+      startTime: Math.floor(timing.startTime / 1000),
+      endTime: Math.floor(timing.endTime / 1000),
+      location: task.location || '',
+      notes: `知行校园通知助手 · ${timing.reminderMinutes ? '截止前30分钟提醒' : '当天09:00提醒'}`,
+      alarm: true,
+      alarmOffset: timing.reminderMinutes * 60,
+      success: (result) => success(result),
+      // Old native shells may expose addPhoneCalendar but reject it at runtime.
+      // Fall back to Android's system editor, which needs no calendar write API.
+      fail: useSystemEditor,
+    });
+  } catch (error) {
+    useSystemEditor(error);
+  }
 }

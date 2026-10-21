@@ -25,11 +25,43 @@ test('Android calendar add delegates creation, permissions, and reminders to the
   assert.equal(options.alarmOffset, 1800);
 });
 
-test('calendar API failures explain that the system calendar service is unavailable', () => {
+test('failed native calendar API falls back to the Android calendar editor', () => {
+  class IntentMock {
+    constructor(action) { this.action = action; this.extras = {}; }
+    setData(uri) { this.uri = uri; return this; }
+    putExtra(key, value) { this.extras[key] = value; return this; }
+  }
+  let opened, result, failure;
+  globalThis.uni = {
+    addPhoneCalendar(options) { options.fail({ errCode: 607, errMsg: 'calendar service unavailable' }); },
+  };
+  globalThis.plus = {
+    os: { name: 'Android' },
+    android: {
+      importClass(name) {
+        if (name === 'android.content.Intent') return IntentMock;
+        if (name === 'android.net.Uri') return { parse: (value) => value };
+        return null;
+      },
+      runtimeMainActivity() { return { startActivity(intent) { opened = intent; } }; },
+    },
+  };
+  addTaskToCalendar({ title: '提交项目书', due_date: '2026-10-23' }, {
+    success(value) { result = value; },
+    fail(error) { failure = error; },
+  });
+  assert.equal(failure, undefined);
+  assert.equal(result.requiresSave, true);
+  assert.equal(opened.action, 'android.intent.action.INSERT');
+  assert.equal(opened.extras.title, '提交项目书');
+});
+
+test('calendar failure keeps a useful error if Android editor cannot open', () => {
   let failure;
   globalThis.uni = {
     addPhoneCalendar(options) { options.fail({ errCode: 607, errMsg: 'calendar service unavailable' }); },
   };
+  delete globalThis.plus;
   addTaskToCalendar({ title: '提交项目书', due_date: '2026-10-23' }, {
     success() {},
     fail(error) { failure = error; },
