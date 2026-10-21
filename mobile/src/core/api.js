@@ -46,3 +46,48 @@ export const deepReadNotice = (connection, text, actions) => request(connection,
   method: 'POST', data: { request_id: uid(), text, actions },
 });
 
+function decodeDocumentResponse(response) {
+  let data = response.data;
+  if (typeof data === 'string') {
+    try { data = JSON.parse(data); } catch { data = null; }
+  }
+  if (response.statusCode >= 200 && response.statusCode < 300 && data?.text) return data;
+  const error = new Error(data?.message || `文档读取失败（${response.statusCode}）`);
+  error.code = data?.code; error.requestId = data?.request_id; throw error;
+}
+
+export function extractDocument(connection, filePath, filename = '') {
+  return new Promise((resolve, reject) => {
+    let url;
+    try { url = baseURL(connection) + '/api/v1/documents/extract'; }
+    catch (error) { reject(error); return; }
+    if (filePath.startsWith('content://') && typeof uni.getFileSystemManager === 'function') {
+      try {
+        uni.getFileSystemManager().readFile({ filePath, success({ data }) {
+          uni.request({
+            url: `${url}-raw?filename=${encodeURIComponent(filename)}`, method: 'POST', data, timeout: 35000,
+            header: { 'Content-Type': 'application/octet-stream', ...(connection.token ? { Authorization: `Bearer ${connection.token}` } : {}) },
+            success(response) { try { resolve(decodeDocumentResponse(response)); } catch (error) { reject(error); } },
+            fail(error) { reject(new Error(error.errMsg?.includes('timeout') ? '文档处理超时，请尝试较小的文件' : '文档上传失败，请检查服务器连接')); },
+          });
+        }, fail(error) { reject(new Error(error.errMsg || '读取所选文件失败')); } });
+      } catch (error) { reject(new Error(error.message || '读取所选文件失败')); }
+      return;
+    }
+    uni.uploadFile({
+      url, filePath, name: 'file', timeout: 35000,
+      header: connection.token ? { Authorization: `Bearer ${connection.token}` } : {},
+      success(response) {
+        try { resolve(decodeDocumentResponse(response)); } catch (error) { reject(error); }
+      },
+      fail(error) {
+        reject(new Error(error.errMsg?.includes('timeout') ? '文档处理超时，请尝试较小的文件' : '无法上传并读取文档，请检查服务器连接'));
+      },
+    });
+  });
+}
+
+export const chatWithAI = (connection, messages) => request(connection, '/api/v1/chat', {
+  method: 'POST', data: { messages }, timeout: 30000,
+}).promise;
+
