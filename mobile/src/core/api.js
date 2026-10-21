@@ -9,6 +9,19 @@ function baseURL(connection) {
   return base.replace(/\/+$/, '');
 }
 
+function accessToken(connection) {
+  try {
+    const session = typeof uni !== 'undefined' && uni.getStorageSync('zhixing.account.session');
+    if (session && typeof session.access_token === 'string' && session.access_token) return session.access_token;
+  } catch { /* Fall back to the configured connection token. */ }
+  return connection?.token || '';
+}
+
+function authorizationHeader(connection) {
+  const token = accessToken(connection);
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 export function request(connection, path, { method = 'GET', data, timeout = 25000 } = {}) {
   let task;
   let cancelled = false;
@@ -17,14 +30,9 @@ export function request(connection, path, { method = 'GET', data, timeout = 2500
     rejectPending = reject;
     let url;
     try { url = baseURL(connection) + path; } catch (error) { reject(error); return; }
-    let sessionToken = '';
-    try {
-      const session = typeof uni !== 'undefined' && uni.getStorageSync('zhixing.account.session');
-      if (session && typeof session.access_token === 'string') sessionToken = session.access_token;
-    } catch { /* A missing account session falls back to the configured connection token. */ }
     task = uni.request({
       url, method, data, timeout,
-      header: { 'Content-Type': 'application/json', ...((sessionToken || connection.token) ? { Authorization: `Bearer ${sessionToken || connection.token}` } : {}) },
+      header: { 'Content-Type': 'application/json', ...authorizationHeader(connection) },
       success(response) {
         if (cancelled) return;
         if (response.statusCode >= 200 && response.statusCode < 300) resolve(response.data);
@@ -71,7 +79,7 @@ export function extractDocument(connection, filePath, filename = '') {
         uni.getFileSystemManager().readFile({ filePath, success({ data }) {
           uni.request({
             url: `${url}-raw?filename=${encodeURIComponent(filename)}`, method: 'POST', data, timeout: 35000,
-            header: { 'Content-Type': 'application/octet-stream', ...(connection.token ? { Authorization: `Bearer ${connection.token}` } : {}) },
+            header: { 'Content-Type': 'application/octet-stream', ...authorizationHeader(connection) },
             success(response) { try { resolve(decodeDocumentResponse(response)); } catch (error) { reject(error); } },
             fail(error) { reject(new Error(error.errMsg?.includes('timeout') ? '文档处理超时，请尝试较小的文件' : '文档上传失败，请检查服务器连接')); },
           });
@@ -81,7 +89,7 @@ export function extractDocument(connection, filePath, filename = '') {
     }
     uni.uploadFile({
       url, filePath, name: 'file', timeout: 35000,
-      header: connection.token ? { Authorization: `Bearer ${connection.token}` } : {},
+      header: authorizationHeader(connection),
       success(response) {
         try { resolve(decodeDocumentResponse(response)); } catch (error) { reject(error); }
       },
