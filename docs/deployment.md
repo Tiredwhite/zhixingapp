@@ -100,6 +100,10 @@ DCloud开发者中心的安卓云证书状态已确认为“证书已生成”�
 
 新版网页资源先复制至 `/var/www/zhixing`，最后原子替换 `index.html`；已有下载目录及0.1.0、0.2.0、0.3.0安装包保留。0.3.1 APK发布为 `/var/www/zhixing/downloads/zhixing-0.3.1.apk`，SHA256为 `132e8234c140257ba53cebfc6405f2d84a05ef94e156c64241da212d3ae6aed1`。完整公网GET返回HTTP 200和20,459,557字节，哈希与本机签名包一致。Nginx语法检查通过，systemd服务为active，公网健康接口报告 `version=0.3.1`、`ai_configured=true`、`model_id=deepseek-flash`。真实聊天问答以及合成Word/PDF文档提取均经公网接口返回HTTP 200。详细包检查见 [0.3.1发布记录](release-0.3.1.md)。安卓覆盖安装后的日历、文档导入、聊天、旧数据保留和新连接令牌仍待用户在真机复核。
 
+## 0.3.2 已部署（2026-10-21）
+
+新版服务位于 `/home/ubuntu/zhixing-20261021-v0.3.2`，由 systemd drop-in `/etc/systemd/system/zhixing.service.d/40-release-0.3.2.conf` 切换。服务复用现有 Python 虚拟环境，继续监听 `127.0.0.1:8002`。新 `.env` 继承现役私有配置并设为600权限；额度库继续使用 `/home/ubuntu/zhixing-20261020/server/data/quota.sqlite3`，账号库写入新版本 `server/data/accounts.sqlite3`。网站静态资源已更新并原子替换首页，旧版本安装包仍保留。0.3.2 APK发布到 `/var/www/zhixing/downloads/zhixing-0.3.2.apk`，大小20,463,852字节，服务器SHA256与本机签名包一致。公网下载地址返回HTTP 200和正确的Content-Length；公网首页及入口JS的SHA256与本地发布包一致。Nginx语法检查通过，systemd服务active，公网 `/healthz` 返回 `version=0.3.2`、`ai_configured=true`、`model_id=deepseek-flash`。未携带认证信息访问 `/api/v1/auth/me` 返回401，注册路由按预期拒绝GET方法（405）。安卓覆盖安装后的真机日历、文档选择器、账号注册登录和聊天交互仍需用户复核。发布记录见 [0.3.2发布记录](release-0.3.2.md)。
+
 ## 运行验证
 
 - 健康检查：不触发模型调用，不返回密钥。

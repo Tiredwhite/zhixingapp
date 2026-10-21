@@ -1,10 +1,11 @@
 # 知行 0.3.2 发布记录
 
-日期：2026-10-21。本机验收通过；服务器发布仍待 OrcaTerm 会话恢复。
+日期：2026-10-21。本机验收与服务器发布均已完成。
 
 - 本机安装包：`.local/release/zhixing-0.3.2.apk`（忽略目录，不提交到仓库）。
 - 版本：0.3.2，versionCode 302；包名 `cn.tiredwhite.zhixing`；AppID `__UNI__435D6C0`。
 - 大小：20,463,852 字节；SHA256：`50213ec02378bd027dd347f4ca7bc125d481f44b943dfcd346760e3d40115599`。
+- 公网安装包：[知行 0.3.2 安卓版](https://tiredwhite.cn/downloads/zhixing-0.3.2.apk)，HTTP 200，Content-Length 为 20,463,852 字节；服务器文件的 SHA256 与本机构建一致。
 - ARM64、ARMv7；minSdk 21、targetSdk 28；APK v2签名通过。签名证书与0.1.0—0.3.1保持一致。
 - 权限为网络访问、网络状态、读写日历和本应用的signature级广播保护权限；未发现多余权限。ZIP CRC有效，已知密钥扫描和本机私密文件扫描均为0。
 
