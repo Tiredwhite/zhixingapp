@@ -1,0 +1,79 @@
+export function chooseAndroidDocument() {
+  return new Promise((resolve, reject) => {
+    // #ifdef APP-PLUS
+    if (plus.os.name !== 'Android') {
+      reject(new Error('当前设备暂不支持选择文档'));
+      return;
+    }
+    const main = plus.android.runtimeMainActivity();
+    const Intent = plus.android.importClass('android.content.Intent');
+    const OpenableColumns = plus.android.importClass('android.provider.OpenableColumns');
+    const intent = new Intent(Intent.ACTION_GET_CONTENT);
+    intent.setType('*/*');
+    intent.addCategory(Intent.CATEGORY_OPENABLE);
+    const requestCode = 24000 + Math.floor(Math.random() * 10000);
+    const previousHandler = main.onActivityResult;
+    let settled = false;
+    let timeout;
+
+    const restore = () => {
+      clearTimeout(timeout);
+      if (main.onActivityResult === handler) main.onActivityResult = previousHandler;
+    };
+    const finish = (callback, value) => {
+      if (settled) return;
+      settled = true;
+      restore();
+      callback(value);
+    };
+    const handler = (resultRequestCode, resultCode, data) => {
+      if (resultRequestCode !== requestCode) {
+        if (typeof previousHandler === 'function') previousHandler(resultRequestCode, resultCode, data);
+        return;
+      }
+      const Activity = plus.android.importClass('android.app.Activity');
+      if (resultCode !== Activity.RESULT_OK || !data) {
+        const error = new Error('已取消选择文档');
+        error.cancelled = true;
+        finish(reject, error);
+        return;
+      }
+      try {
+        const uri = data.getData();
+        if (!uri) throw new Error('没有取得所选文档');
+        const resolver = main.getContentResolver();
+        const columns = [OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE];
+        const cursor = plus.android.importClass(resolver.query(uri, columns, null, null, null));
+        let name = '';
+        let size = 0;
+        try {
+          if (cursor && cursor.moveToFirst()) {
+            const nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+            const sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE);
+            if (nameIndex >= 0) name = cursor.getString(nameIndex) || '';
+            if (sizeIndex >= 0) size = Number(cursor.getLong(sizeIndex)) || 0;
+          }
+        } finally {
+          if (cursor) cursor.close();
+        }
+        const path = plus.android.invoke(uri, 'toString');
+        if (!path) throw new Error('无法读取所选文档的位置');
+        finish(resolve, { path, name, size });
+      } catch (error) {
+        finish(reject, new Error(error.message || '读取文档信息失败'));
+      }
+    };
+
+    main.onActivityResult = handler;
+    timeout = setTimeout(() => finish(reject, new Error('选择文档等待超时，请重试')), 120000);
+    try {
+      main.startActivityForResult(intent, requestCode);
+    } catch (error) {
+      finish(reject, new Error(error.message || '无法打开系统文档选择器'));
+    }
+    // #endif
+    // #ifndef APP-PLUS
+    reject(new Error('此设备暂不支持选择文档'));
+    // #endif
+  });
+}

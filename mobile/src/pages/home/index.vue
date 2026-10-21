@@ -1,6 +1,6 @@
 <template>
   <view class="app-shell">
-    <AppHeader :online="aiReady" @settings="settingsOpen = true" />
+    <AppHeader :online="aiReady" :show-download="true" @settings="settingsOpen = true" @download="goDownload" />
     <view class="home-intro">
       <view><text class="eyebrow">LESS NOISE, MORE CLARITY</text><text class="hero-title">通知里的事，<text class="hero-accent">清楚安排。</text></text><text class="hero-description">粘贴一段校园通知，核对关键信息，把下一步留在清单里。</text></view>
       <view class="intro-date"><text>{{ today }}</text><text class="date-caption">每一件小事，都有着落</text></view>
@@ -11,14 +11,15 @@
         <view class="card composer">
           <view class="section-heading"><view class="composer-heading"><view class="small-icon"><Icon name="paper" :size="20" /></view><text class="section-title">粘贴一段通知</text></view><text class="small-label">01 / 输入</text></view>
           <view class="input-area">
-            <textarea v-model="text" class="notice-input" :maxlength="2000" :disabled="busy" placeholder="把课程、竞赛或办事通知粘贴到这里…&#10;&#10;例如：请于10月23日前提交项目书，答辩时间另行通知。" placeholder-style="color: #a6aea0; line-height: 1.9;" :auto-height="false" />
-            <view class="input-footer"><text>内容仅由你主动提供</text><text>{{ text.length }} / 2000</text></view>
+            <textarea v-model="text" class="notice-input" :maxlength="12000" :disabled="busy || fileBusy" placeholder="粘贴校园通知，或从文件中导入…&#10;&#10;例如：请于10月23日前提交项目书，答辩时间另行通知。" placeholder-style="color: #a6aea0; line-height: 1.9;" :auto-height="false" />
+            <view class="input-footer"><text>{{ importedFile ? `已读取 ${importedFile}` : '内容仅由你主动提供' }}</text><text>{{ text.length }} / 12000</text></view>
           </view>
+          <view class="document-row"><button class="secondary-button document-button" :disabled="busy || fileBusy" @click="chooseDocument"><Icon name="paper" :size="16" />{{ fileBusy ? '正在读取文档…' : '导入 Word / PDF' }}</button><text class="document-hint">支持 .docx 和可选文字的 PDF；文件仅作本次提取，不会长期保存</text></view>
           <view class="sample-row"><text class="sample-prefix">试一试</text><button v-for="sample in SAMPLES" :key="sample.id" class="sample-button" :disabled="busy" @click="fillSample(sample)">{{ sample.label }}<text class="sample-arrow">↗</text></button></view>
           <view class="source-time-row"><Icon name="clock" :size="15" color="#8b9585" /><input v-model="published" :disabled="busy" class="source-time-input" placeholder="通知发布时间（选填，如 2026-10-20 09:00）" :maxlength="16" /></view>
           <text class="field-hint">相对日期需要通知的发布时间；留空时会标记为待确认。</text>
           <view v-if="errorMessage" class="inline-message"><Icon name="info" :size="17" color="#a3613b" /><view><text>{{ errorMessage }}</text><text v-if="failedId" class="request-reference">请求编号 {{ failedId.slice(0, 8) }}</text></view></view>
-          <view class="composer-actions"><button class="primary-button parse-button" :disabled="busy || text.trim().length < 2" @click="startAI"><Icon name="spark" color="#fffefa" :size="19" />{{ busy ? '正在理解通知…' : 'AI 整理通知' }}<Icon v-if="!busy" name="arrow" color="#fffefa" :size="18" /></button><button v-if="busy" class="secondary-button" @click="cancelParsing">取消</button><button v-else class="manual-button" @click="startManual">手动整理<Icon name="arrow" :size="15" color="#7a8977" /></button></view>
+          <view class="composer-actions"><button class="primary-button parse-button" :disabled="busy || fileBusy || text.trim().length < 2" @click="startAI"><Icon name="spark" color="#fffefa" :size="19" />{{ busy ? '正在理解通知…' : 'AI 整理通知' }}<Icon v-if="!busy" name="arrow" color="#fffefa" :size="18" /></button><button v-if="busy" class="secondary-button" @click="cancelParsing">取消</button><button v-else class="manual-button" :disabled="fileBusy" @click="startManual">手动整理<Icon name="arrow" :size="15" color="#7a8977" /></button></view>
           <view class="composer-bottom"><Icon name="shield" :size="13" color="#9ba68f" /><text>AI 结果先核对，再保存；解析时文本将发送至 AI 服务。</text></view>
         </view>
         <view class="connection-strip"><view class="connection-caption"><view class="status-dot" :class="{ online: aiReady }" /><view><text class="connection-title">{{ aiReady ? 'DeepSeek 已就绪' : 'AI 连接待检查' }}</text><text class="connection-subtitle">{{ aiReady ? '保留原文依据 · 支持字段核对' : '先体验示例，或配置你的服务连接' }}</text></view></view><button class="text-button" @click="settingsOpen = true">连接设置<Icon name="arrow" :size="15" /></button></view>
@@ -29,8 +30,9 @@
         <view class="local-note"><Icon name="shield" :size="16" color="#87957a" /><text>待办保存在本机。断网时，也能继续查看和修改。</text></view>
       </view>
     </view>
-    <view class="home-footnote"><text>从通知读懂要求，再决定下一步。</text><text>知行 · v0.2</text></view>
+    <view class="home-footnote"><text>从通知读懂要求，再决定下一步。</text><text>知行 · {{ APP_VERSION }}</text></view>
     <AppNav active="home" :count="pendingCount" />
+    <ChatRobot />
     <ConnectionPanel :visible="settingsOpen" @close="settingsOpen = false" @changed="setHealth" />
   </view>
 </template>
@@ -42,13 +44,16 @@ import AppHeader from '../../components/AppHeader.vue';
 import AppNav from '../../components/AppNav.vue';
 import ConnectionPanel from '../../components/ConnectionPanel.vue';
 import Icon from '../../components/Icon.vue';
+import ChatRobot from '../../components/ChatRobot.vue';
 import { appState, repository, reportError } from '../../core/repository.js';
-import { health, parseNotice } from '../../core/api.js';
+import { extractDocument, health, parseNotice } from '../../core/api.js';
+import { chooseAndroidDocument } from '../../core/document-picker.js';
 import { sourceTime, dueState } from '../../core/dates.js';
 import { SAMPLES, manualCandidate } from '../../core/samples.js';
+import { APP_VERSION } from '../../core/release.js';
 
 const text = ref(appState.draft.text), published = ref(appState.draft.source_time || '');
-const busy = ref(false), errorMessage = ref(''), failedId = ref(''), aiReady = ref(false), settingsOpen = ref(false);
+const busy = ref(false), fileBusy = ref(false), importedFile = ref(''), errorMessage = ref(''), failedId = ref(''), aiReady = ref(false), settingsOpen = ref(false);
 const today = new Date().toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', weekday: 'long', timeZone: 'Asia/Shanghai' });
 const pendingCount = computed(() => appState.tasks.filter((t) => t.status !== 'done').length);
 const doneCount = computed(() => appState.tasks.filter((t) => t.status === 'done').length);
@@ -60,11 +65,44 @@ onHide(() => { clearTimeout(debounce); if (text.value !== repository.state.draft
 onUnload(() => { clearTimeout(debounce); requestVersion++; activeRequest?.cancel(); });
 function setHealth(value) { aiReady.value = Boolean(value?.ai_configured); }
 function fillSample(sample) { text.value = sample.text; published.value = ''; errorMessage.value = ''; }
+async function importDocument(file) {
+  const path = file?.path || file?.tempFilePath;
+  if (!path) { uni.showToast({ title: '没有取得文件路径，请重新选择', icon: 'none' }); return; }
+  const filename = file?.name || path.split(/[\\/]/).pop() || '';
+  if (!/\.(docx|pdf)$/i.test(filename)) { uni.showToast({ title: '请选 .docx Word 或 PDF 文件', icon: 'none' }); return; }
+  if (file?.size > 12 * 1024 * 1024) { uni.showToast({ title: '文件不能超过 12 MB', icon: 'none' }); return; }
+  fileBusy.value = true; errorMessage.value = '';
+  try {
+    const result = await extractDocument(repository.state.connection, path, filename);
+    text.value = result.text; importedFile.value = filename;
+    uni.showToast({ title: `已读取 ${result.characters} 字`, icon: 'success' });
+  } catch (error) { errorMessage.value = error.message; }
+  finally { fileBusy.value = false; }
+}
+async function chooseDocument() {
+  // #ifdef APP-PLUS
+  if (plus.os.name === 'Android') {
+    fileBusy.value = true;
+    try { await importDocument(await chooseAndroidDocument()); }
+    catch (error) {
+      if (!error.cancelled) uni.showToast({ title: error.message || '文件选择失败，请重试', icon: 'none' });
+      fileBusy.value = false;
+    }
+    return;
+  }
+  // #endif
+  if (typeof uni.chooseFile !== 'function') { uni.showToast({ title: '此设备暂不支持选择文档', icon: 'none' }); return; }
+  uni.chooseFile({
+    count: 1, type: 'all',
+    success: (result) => importDocument({ ...result.tempFiles?.[0], path: result.tempFiles?.[0]?.path || result.tempFilePaths?.[0] }),
+    fail: (error) => { if (!/cancel/i.test(error.errMsg || '')) uni.showToast({ title: '文件选择失败，请重试', icon: 'none' }); },
+  });
+}
 function persistDraft() { clearTimeout(debounce); return repository.saveDraft(text.value.trim(), published.value.trim()); }
 function review(workflow) { repository.setWorkflow(workflow); uni.navigateTo({ url: '/pages/review/index' }); }
 function startManual() {
   try {
-    if (text.value.trim().length < 2) throw new Error('请先粘贴需要整理的通知，至少2个字');
+    if (text.value.trim().length < 2) throw new Error('请先粘贴或导入需要整理的通知，至少2个字');
     const draft = persistDraft();
     review({ notice_id: draft.id, text: draft.text, mode: 'manual', items: [manualCandidate()], warnings: [] });
   } catch (error) { reportError(error); }
@@ -96,6 +134,7 @@ async function startAI() {
 }
 function cancelParsing() { requestVersion++; activeRequest?.cancel(); activeRequest = null; busy.value = false; errorMessage.value = '已取消等待，原文已保留。模型端可能仍在处理该次请求。'; }
 function goTasks() { uni.reLaunch({ url: '/pages/tasks/index' }); }
+function goDownload() { uni.navigateTo({ url: '/pages/download/index' }); }
 </script>
 
 <style scoped lang="scss">
@@ -111,7 +150,10 @@ function goTasks() { uni.reLaunch({ url: '/pages/tasks/index' }); }
 .small-icon { background: #eef1e6; padding: 9px; border-radius: 10px; display: flex; }
 .input-area { background: #f8f9f3; border: 1px solid #e8ebdf; border-radius: 13px; margin-top: 23px; padding: 20px 18px 13px; }
 .notice-input { width: 100%; height: 206px; font-size: 13px; line-height: 1.9; color: #425846; }
-.input-footer { display: flex; justify-content: space-between; font-size: 10px; color: #a5ad9b; padding-top: 12px; }
+.input-footer { display: flex; justify-content: space-between; gap: 8px; font-size: 10px; color: #a5ad9b; padding-top: 12px; }
+.document-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 14px; }
+.document-button { min-height: 38px; padding: 8px 13px; font-size: 11px; }
+.document-hint { font-size: 10px; color: #97a18e; line-height: 1.6; }
 .sample-row { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; margin-top: 15px; }
 .sample-prefix { font-size: 10px; color: #939d87; margin-right: 2px; }
 .sample-button { font-size: 10px; border: 1px solid #e4e8dc; padding: 6px 10px; border-radius: 7px; color: #6f7e66; background: #fffefa; }
