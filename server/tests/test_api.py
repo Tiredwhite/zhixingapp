@@ -77,8 +77,34 @@ def test_invalid_json_only_gets_one_repair(settings, payload):
         assert response.status_code == 502
         assert response.json()['code'] == 'INVALID_MODEL_OUTPUT'
         assert len(calls) == 2
+        assert calls[1]['messages'][-2] == {'role': 'assistant', 'content': '{not json'}
         assert 'items每项' in calls[1]['messages'][-1]['content']
         assert 'steps每项' not in calls[1]['messages'][-1]['content']
+
+
+def test_repair_includes_failed_answer_and_can_recover(settings, payload):
+    calls = []
+    def provider(request):
+        calls.append(json.loads(request.content))
+        if len(calls) == 1:
+            return httpx.Response(200, json={'choices': [{'message': {'content': '{broken'}, 'finish_reason': 'stop'}]})
+        return model_response()
+    with TestClient(create_app(settings, httpx.MockTransport(provider))) as client:
+        response = client.post('/api/v1/parse', json=payload, headers=AUTH)
+        assert response.status_code == 200
+        assert response.json()['items'][0]['action'] == '提交项目书PDF'
+        assert calls[1]['messages'][-2] == {'role': 'assistant', 'content': '{broken'}
+        assert 'JSON不完整' in calls[1]['messages'][-1]['content']
+
+
+def test_parse_accepts_fenced_json_but_keeps_strict_schema(settings, payload):
+    data = model_result()
+    content = '```json\n' + json.dumps(data, ensure_ascii=False) + '\n```'
+    provider = lambda _: httpx.Response(200, json={'choices': [{'message': {'content': content}, 'finish_reason': 'stop'}]})
+    with TestClient(create_app(settings, httpx.MockTransport(provider))) as client:
+        response = client.post('/api/v1/parse', json=payload, headers=AUTH)
+    assert response.status_code == 200
+    assert response.json()['items'][0]['action'] == '提交项目书PDF'
 
 
 def test_empty_and_extra_model_fields_are_not_accepted(settings, payload):

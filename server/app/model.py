@@ -66,7 +66,7 @@ class ModelClient:
     async def deep_read(self, request: DeepReadRequest):
         def check_quotes(result):
             if result.summary_quote not in request.text or any(step.source_quote not in request.text for step in result.steps):
-                raise InvalidModelOutput()
+                raise InvalidModelOutput('摘要或步骤的原文引用不匹配')
         payload = {
             'model': self.settings.model_id,
             'messages': [
@@ -133,23 +133,37 @@ class ModelClient:
                         raise ApiError(502, 'MODEL_CREDENTIALS', '模型服务凭证无效，请检查服务端配置')
                     if response.status_code != 200:
                         raise ApiError(502, 'MODEL_REJECTED', '模型服务拒绝了请求，请检查服务配置')
+                    content = None
                     try:
                         envelope = response.json()
                         choice = envelope['choices'][0]
                         if choice.get('finish_reason') == 'length':
-                            raise InvalidModelOutput()
+                            raise InvalidModelOutput('输出被截断，请精简字段并返回完整JSON')
                         content = choice['message']['content']
                         if not isinstance(content, str) or not content.strip():
-                            raise InvalidModelOutput()
-                        result = result_type.model_validate_json(content)
+                            raise InvalidModelOutput('模型没有返回JSON内容')
+                        result = result_type.model_validate_json(_json_object(content))
                         if validate:
                             validate(result)
                         return result
-                    except (KeyError, IndexError, TypeError, ValueError, ValidationError, InvalidModelOutput):
-                        last_error = ApiError(502, 'INVALID_MODEL_OUTPUT', 'AI 返回的结果未通过格式校验，可重试或手动整理', True)
-                        if attempt == 0:
-                            payload['messages'].append({'role': 'user', 'content': repair_prompt})
-                            continue
+                    except InvalidModelOutput as exc:
+                        last_error = ApiError(502, 'INVALID_MODEL_OUTPUT', 'AI 回复的字段或原文引用不符合校验，系统已自动尝试修复；仍失败时请重试或手动整理', True)
+                        failure_hint = exc.hint
+                    except ValidationError as exc:
+                        last_error = ApiError(502, 'INVALID_MODEL_OUTPUT', 'AI 回复的字段或原文引用不符合校验，系统已自动尝试修复；仍失败时请重试或手动整理', True)
+                        failure_hint = _validation_hint(exc)
+                    except (KeyError, IndexError, TypeError, ValueError):
+                        last_error = ApiError(502, 'INVALID_MODEL_OUTPUT', 'AI 回复的字段或原文引用不符合校验，系统已自动尝试修复；仍失败时请重试或手动整理', True)
+                        failure_hint = 'JSON不完整或结构不符合规定'
+                    if attempt == 0:
+                        # A repair request without the previous assistant turn cannot repair it.
+                        if isinstance(content, str) and content.strip():
+                            payload['messages'].append({'role': 'assistant', 'content': content[:16000]})
+                        payload['messages'].append({
+                            'role': 'user',
+                            'content': f'{repair_prompt}\n本次校验问题：{failure_hint}。请据此修复并重新完整输出。',
+                        })
+                        continue
                 except (TimeoutError, httpx.TimeoutException):
                     last_error = ApiError(504, 'MODEL_TIMEOUT', 'AI 解析超时，原文已保留，可重试或手动整理', True)
                 except httpx.RequestError:
@@ -157,4 +171,33 @@ class ModelClient:
                 if attempt == 0 and deadline - time.monotonic() > 1:
                     await asyncio.sleep(1)
         raise last_error or ApiError(504, 'MODEL_TIMEOUT', 'AI 解析超时，可重试或手动整理', True)
+
+
+def _json_object(content: str) -> str:
+    """Accept fenced/prefaced JSON while keeping Pydantic's strict schema checks."""
+    candidate = content.strip().lstrip('\ufeff')
+    if candidate.startswith('```'):
+        lines = candidate.splitlines()
+        if lines and lines[0].startswith('```'):
+            lines = lines[1:]
+        if lines and lines[-1].strip() == '```':
+            lines = lines[:-1]
+        candidate = '\n'.join(lines).strip()
+    start = candidate.find('{')
+    if start < 0:
+        raise ValueError('No JSON object')
+    value, _ = json.JSONDecoder().raw_decode(candidate, start)
+    if not isinstance(value, dict):
+        raise ValueError('Expected a JSON object')
+    return json.dumps(value, ensure_ascii=False, separators=(',', ':'))
+
+
+def _validation_hint(error: ValidationError) -> str:
+    # Include only field paths and error classes, never model input or notice text.
+    hints = []
+    for item in error.errors()[:5]:
+        path = '.'.join(str(part) for part in item.get('loc', ())) or 'root'
+        kind = str(item.get('type', 'invalid'))[:40]
+        hints.append(f'{path}:{kind}')
+    return '字段校验失败（' + '、'.join(hints) + '）' if hints else '字段结构不符合规定'
 

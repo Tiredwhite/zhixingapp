@@ -7,5 +7,7 @@ class ApiError(Exception):
 
 
 class InvalidModelOutput(Exception):
-    pass
+    def __init__(self, hint='JSON结构或原文依据无效'):
+        self.hint = hint
+        super().__init__(hint)
 
