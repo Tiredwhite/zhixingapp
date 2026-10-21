@@ -52,6 +52,7 @@ def main():
         raise SystemExit('Could not read APK identity')
     permissions = sorted(set(re.findall(r"uses-permission: name='([^']+)'", badging)))
     allowed = {'android.permission.INTERNET', 'android.permission.ACCESS_NETWORK_STATE',
+               'android.permission.READ_CALENDAR', 'android.permission.WRITE_CALENDAR',
                PACKAGE+'.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION'}
     secret_values = []
     env = ROOT/'.local/secrets/server.production.env'
