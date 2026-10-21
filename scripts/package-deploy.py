@@ -45,7 +45,11 @@ def main():
     OUTPUT.parent.mkdir(parents=True, exist_ok=True)
     with zipfile.ZipFile(OUTPUT, "w", zipfile.ZIP_DEFLATED) as archive:
         for name, data in sorted(entries.items()):
-            archive.writestr(name, data)
+            info = zipfile.ZipInfo(name)
+            info.create_system = 3
+            info.compress_type = zipfile.ZIP_DEFLATED
+            info.external_attr = (0o100644 << 16)
+            archive.writestr(info, data)
     with zipfile.ZipFile(OUTPUT) as archive:
         assert archive.testzip() is None
         for name, expected in manifest.items():
