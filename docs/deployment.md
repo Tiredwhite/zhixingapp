@@ -15,6 +15,10 @@
 5. 可选 Web 预览：在 mobile 执行 `npm ci` 与 `npm run build`，将 `dist/build/h5` 上传到配置的静态目录。移动端的“连接设置”填写 API 所在 HTTPS 域名和临时访问令牌。
 6. 对外仅开放80/443和必要的管理端口。先验证健康接口，再用一条脱敏通知验证解析，最后检查配额、错误反馈和日志轮转。
 
+0.3.0增加 `/api/v1/documents/extract`，需在反向代理中允许最大13 MB的上传体。服务端限制单文件12 MB、PDF最多80页、提取文本最多12000字；仅接受PDF和`.docx`。文件上传后在本次请求期间临时读取，响应返回提取文本，不写入项目数据库或长期文件。当前只提取可选择文字的PDF，不执行扫描件OCR；只有用户在应用中点击“AI整理通知”后，提取文字才会再发送给模型服务。
+
+0.3.1修复聊天界面未读取请求对象中 Promise 的问题；安卓通过系统文档选择器导入 Word/PDF，直接创建系统日历事件和提醒。网站保留 Android 下载入口，App 内的下载按钮与介绍页内容仅对 H5 编译。
+
 容器为非root用户运行。课程版本只运行一个API worker，请求缓存、并发计数和分钟限流在单进程内；不能直接增加worker冒充多实例高可用。SQLite每日总额度持久化，但本项目没有独立用户登录和商业级权限体系。
 
 本机尚未安装 Docker，容器部署路径未构建验证。当前云服务器采用下述已验证的原生systemd方案。
@@ -81,6 +85,14 @@ DCloud开发者中心的安卓云证书状态已确认为“证书已生成”�
 0.2.0 APK通过实物验签和权限检查后，上传到服务器并核对SHA256，原子发布到 `/var/www/zhixing/downloads/zhixing-0.2.0.apk`。公网 [0.2.0安卓APK](https://tiredwhite.cn/downloads/zhixing-0.2.0.apk) 完整下载验证HTTP 200、20,447,068字节、SHA256 `8359ba402133f9cbaa9a545ef3fa2c700f65aa90cbef7007f052d2a045ff6228`，与本机验签包一致。0.1.0旧包仍可下载且字节数核对正常。0.2手机覆盖更新和实际AI深读体验仍待机主验证。
 
 真机的 `127.0.0.1` 指向手机自身；请在“连接设置”填写 `https://tiredwhite.cn` 和应用连接令牌。本机开发后端只绑定电脑回环地址；线上后端绑定服务器的127.0.0.1:8002，通过Nginx提供HTTPS访问。
+
+## 0.3.0 已部署记录（2026-10-21）
+
+新版已发布到 `https://tiredwhite.cn/`。代码目录为 `/home/ubuntu/zhixing-20261021-v0.3.0`，通过 systemd drop-in `/etc/systemd/system/zhixing.service.d/20-release-0.3.0.conf` 切换工作目录和虚拟环境；`.env` 以600权限复制，AI密钥没有进入静态目录或公开包。`QUOTA_DB` 仍指向0.2.0使用的SQLite配额文件，避免重置现有额度数据。旧网站快照保留在 `/var/www/zhixing-backup-20261021-0.3.0`。
+
+公网健康接口返回 `version=0.3.0`、`ai_configured=true`、`model_id=deepseek-flash`；systemd服务为active，Nginx语法检查通过。首页的“下载 App”可打开Android介绍页，页面展示AI深读、Word/PDF导入和日历提醒；安装包地址为 [知行0.3.0 APK](https://tiredwhite.cn/downloads/zhixing-0.3.0.apk)，公网HEAD返回HTTP 200及20,459,557字节。服务器文件与本机签名APK SHA256一致：`bd48418f2da1deebe9024ffa8a4cfcd791c73d2258d80679f47058f21785415b`。0.1.0和0.2.0下载地址保留。
+
+首次上线时静态资源因归档权限为600而被Nginx拒绝，已把 `/var/www/zhixing/assets` 与 `/var/www/zhixing/static` 内目录修正为755、文件修正为644，并通过公网确认JS/CSS返回200、下载页正常渲染。`scripts/package-deploy.py` 已改为在部署包中写入常规644文件权限，避免后续重建产生相同问题。新APK覆盖升级尚待机主在安卓手机验证；尤其需确认首次日历授权、Word/PDF导入与小知聊天行为。
 
 ## 运行验证
 
