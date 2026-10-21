@@ -71,6 +71,24 @@ test('API failure keeps text and allows explicit manual continuation', async ({ 
   await expect(page.locator('.task-list')).toContainText('手动整理');
 });
 
+test('AI assistant renders the reply returned by the chat API', async ({ page }) => {
+  await page.route('**/api/v1/chat', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({
+    mode: 'chat', model_id: 'deepseek-flash', request_id: 'chat-test', reply: '先核对通知中的截止时间，再按指定渠道提交材料。',
+  }) }));
+  await page.goto('/');
+  await page.locator('.robot-launcher').click();
+  await page.locator('.chat-input textarea').fill('我应该怎样处理这条通知？');
+  await page.locator('.send-chat').click();
+  await expect(page.locator('.chat-line.assistant').last()).toContainText('先核对通知中的截止时间');
+});
+
+test('website download link opens the app introduction page', async ({ page }) => {
+  await page.goto('/');
+  await page.locator('.download-link').click();
+  await expect(page.locator('.download-hero')).toContainText('面向校园生活的 AI 通知助手');
+  await expect(page.locator('.download-cta')).toContainText('下载 Android 安装包');
+});
+
 test('real AI deep reading visibly separates suggestions from notice facts and survives saving', async ({ page }) => {
   const text = '请于2026年10月23日18:00前通过教学平台提交项目书PDF，答辩时间另行通知。';
   await page.route('**/api/v1/parse', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({
