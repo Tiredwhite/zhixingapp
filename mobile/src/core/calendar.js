@@ -32,23 +32,23 @@ function findWritableCalendar(resolver, Calendars) {
   const cursor = plus.android.importClass(plus.android.invoke(resolver, 'query', Calendars.CONTENT_URI, columns, null, null, null));
   if (!cursor) throw new Error('无法读取手机日历列表');
   try {
-    const idIndex = cursor.getColumnIndex(Calendars._ID);
-    const accessIndex = cursor.getColumnIndex(Calendars.CALENDAR_ACCESS_LEVEL);
-    const visibleIndex = cursor.getColumnIndex(Calendars.VISIBLE);
-    while (cursor.moveToNext()) {
+    const idIndex = plus.android.invoke(cursor, 'getColumnIndex', Calendars._ID);
+    const accessIndex = plus.android.invoke(cursor, 'getColumnIndex', Calendars.CALENDAR_ACCESS_LEVEL);
+    const visibleIndex = plus.android.invoke(cursor, 'getColumnIndex', Calendars.VISIBLE);
+    while (plus.android.invoke(cursor, 'moveToNext')) {
       if (idIndex < 0 || accessIndex < 0) continue;
-      const visible = visibleIndex < 0 || Number(cursor.getInt(visibleIndex)) === 1;
-      if (visible && Number(cursor.getInt(accessIndex)) >= 500) return Number(cursor.getLong(idIndex));
+      const visible = visibleIndex < 0 || Number(plus.android.invoke(cursor, 'getInt', visibleIndex)) === 1;
+      if (visible && Number(plus.android.invoke(cursor, 'getInt', accessIndex)) >= 500) return Number(plus.android.invoke(cursor, 'getLong', idIndex));
     }
   } finally {
-    cursor.close();
+    plus.android.invoke(cursor, 'close');
   }
   throw new Error('手机中没有可写入的日历，请先在系统日历添加一个日历账户');
 }
 
 function insertAndroidEvent(task, timing) {
   const main = plus.android.runtimeMainActivity();
-  const resolver = main.getContentResolver();
+  const resolver = plus.android.invoke(main, 'getContentResolver');
   const Calendars = plus.android.importClass('android.provider.CalendarContract$Calendars');
   const Events = plus.android.importClass('android.provider.CalendarContract$Events');
   const Reminders = plus.android.importClass('android.provider.CalendarContract$Reminders');
