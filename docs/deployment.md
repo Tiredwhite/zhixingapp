@@ -112,6 +112,12 @@ DCloud开发者中心的安卓云证书状态已确认为“证书已生成”�
 
 systemd 为active，公网 `/healthz` 返回 `version=0.3.3`、`ai_configured=true`、`model_id=deepseek-flash`；未登录访问 `/api/v1/auth/me` 返回401。首页返回HTTP 200，线上首页SHA-256与发布文件一致。0.3.3 APK 位于 `/var/www/zhixing/downloads/zhixing-0.3.3.apk`；公网下载返回HTTP 200、`Content-Length: 20467948`，完整公网下载计算出的SHA-256与本机签名包一致：`b0dd75ffaa0357ba5ae384e97882390ccbde400ecdaefef40cca750fe161d86b`。地址：[知行0.3.3 APK](https://tiredwhite.cn/downloads/zhixing-0.3.3.apk)。既有安装包链接仍保留。检查详情见 [0.3.3发布记录](release-0.3.3.md)。手机覆盖安装和真实账号的PDF/DOC/DOCX导入、日历写入及登录流程仍待机主复核。
 
+## 0.3.4 部署（2026-10-21）
+
+后端发布到独立目录 `/home/ubuntu/zhixing-20261021-v0.3.4`，由 `/etc/systemd/system/zhixing.service.d/60-release-0.3.4.conf` 切换。创建独立 Python 3.13.16 虚拟环境并安装锁定依赖，包括 PyMuPDF 1.28.2；Tesseract 已配置 `chi_sim`、`eng`。`.env` 从0.3.3继承、权限600，账号库和配额库仍使用原路径 `/home/ubuntu/zhixing-20261021-v0.3.2/server/data/accounts.sqlite3` 与 `/home/ubuntu/zhixing-20261020/server/data/quota.sqlite3`，部署后文件仍分别为24,576和12,288字节。没有在新目录创建账号库。
+
+服务重启后状态为active；本地与公网 `/healthz` 返回 `version=0.3.4`、`ai_configured=true`、`model_id=deepseek-flash`。服务器端直接调用生产 `extract_document` 函数处理合成扫描 PDF，OCR识别到预期英文文本并返回1页识别计数。Nginx配置及既有22 MB上传限制未改动。网站更新前备份到 `/var/www/zhixing-backup-20261021-0.3.4`，新静态资源复制到 `/var/www/zhixing`；公网首页摘要与本机发布一致。0.3.4 APK上传到 `/var/www/zhixing/downloads/zhixing-0.3.4.apk`，完整公网下载返回HTTP 200、24,432,932字节，SHA-256 与本机包相同。地址：[知行0.3.4 APK](https://tiredwhite.cn/downloads/zhixing-0.3.4.apk)。详见 [0.3.4发布记录](release-0.3.4.md)。真机覆盖安装、扫描 PDF 和 iQOO 9 系统日历写入仍待用户复核。
+
 ## 运行验证
 
 - 健康检查：不触发模型调用，不返回密钥。
