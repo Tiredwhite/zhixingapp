@@ -29,7 +29,7 @@
         <view class="local-note"><Icon name="shield" :size="16" color="#87957a" /><text>待办保存在本机。断网时，也能继续查看和修改。</text></view>
       </view>
     </view>
-    <view class="home-footnote"><text>从一条通知开始，让清单慢慢变清楚。</text><text>知行 · v0.1</text></view>
+    <view class="home-footnote"><text>从通知读懂要求，再决定下一步。</text><text>知行 · v0.2</text></view>
     <AppNav active="home" :count="pendingCount" />
     <ConnectionPanel :visible="settingsOpen" @close="settingsOpen = false" @changed="setHealth" />
   </view>

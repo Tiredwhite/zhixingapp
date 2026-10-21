@@ -88,6 +88,21 @@ test('draft keeps notice identity across unchanged retries', () => {
   assert.notEqual(store.saveDraft('请提交新材料').id, a.id);
 });
 
+test('grounded deep reading persists with its notice and survives backup restore', () => {
+  const deep_read = {
+    mode: 'ai_deep_read', summary: '需要提交项目书', summary_quote: '提交项目书',
+    steps: [{ instruction: '核对文件', why: '避免遗漏', source_quote: '项目书' }], questions: [],
+  };
+  const adapter = memory(); let store = createStore(adapter);
+  store.saveTasks({ ...workflow, deep_read }, [action]);
+  store = createStore(adapter);
+  assert.equal(store.state.notices[0].deep_read.steps[0].instruction, '核对文件');
+  const restored = createStore(memory()); restored.restoreBackup(store.exportBackup());
+  assert.equal(restored.state.notices[0].deep_read.summary, deep_read.summary);
+  const bad = { ...deep_read, summary_quote: '不存在的原文' };
+  assert.throws(() => restored.setWorkflow({ ...workflow, deep_read: bad }), /AI深读数据格式/);
+});
+
 test('capacity limit never discards existing tasks', () => {
   const store = createStore(memory());
   const many = Array.from({ length: 200 }, (_, i) => ({ ...action, id: `a-${i}` }));

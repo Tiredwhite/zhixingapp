@@ -22,11 +22,11 @@ HBuilderX 安装目录：`D:\code-app\HBuilderX.5.26.2026091802\HBuilderX`。在
 
 ## 开发状态
 
-本地版本已完成真实AI解析、核对与本地待办闭环。Web与Android App资源编译通过；已通过26项后端、15项本地逻辑、3项浏览器流程检查。云端已上线 [知行](https://tiredwhite.cn/)，HTTPS、生产鉴权、真实AI解析与证书模拟续期验证通过。安卓0.1.0签名包已生成，包名、AppID、架构、权限及已知密钥扫描通过；手机安装与实际断网重启仍待机主验收。文件及校验值见 [版本交付记录](docs/release-0.1.0.md)，完整测试边界见 `docs/testing.md`。
+0.1.0已完成真实AI解析、核对与本地待办闭环，并已在机主安卓手机完成安装、真实AI调用、离线编辑及重开保留数据的初步验收。0.2.0增加 [AI深读](docs/ai-deep-read.md)：在提取之后，真实模型给出有原文锚点的办理步骤、理由和待追问问题。新版后端及网页已发布到 [知行](https://tiredwhite.cn/)，并通过线上真实模型调用；[安卓0.2.0安装包](https://tiredwhite.cn/downloads/zhixing-0.2.0.apk)已验签并发布，手机覆盖更新仍待机主验证。版本详情见 [0.2.0交付记录](docs/release-0.2.0.md)，完整测试边界见 `docs/testing.md`。
 
 手机或新浏览器的“连接设置”需要填写服务器网址及应用连接令牌。部署者的连接信息单独保存在本机忽略目录 `.local/secrets/知行连接信息.txt`，不提交到仓库；不要将模型API密钥填写到前端。
 
-安卓手机可直接 [下载知行0.1.0 APK](https://tiredwhite.cn/downloads/zhixing-0.1.0.apk)。公网完整下载的字节数和SHA256已与本机验签包核对一致，手机安装与运行仍待实测。
+安卓手机可直接 [下载知行0.2.0 APK](https://tiredwhite.cn/downloads/zhixing-0.2.0.apk)。公网完整下载与本机验签包的字节数和SHA256一致。已安装0.1.0的手机应保留原应用直接覆盖安装，升级前建议导出本地任务备份；升级后的任务保留与AI深读显示还需要真机验收。[0.1.0旧版下载](https://tiredwhite.cn/downloads/zhixing-0.1.0.apk)仍保留。
 
 ## 本机启动
 

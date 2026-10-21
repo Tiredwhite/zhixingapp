@@ -70,3 +70,29 @@ test('API failure keeps text and allows explicit manual continuation', async ({ 
   await expect(page.locator('.task-card')).toHaveCount(1);
   await expect(page.locator('.task-list')).toContainText('手动整理');
 });
+
+test('real AI deep reading visibly separates suggestions from notice facts and survives saving', async ({ page }) => {
+  const text = '请于2026年10月23日18:00前通过教学平台提交项目书PDF，答辩时间另行通知。';
+  await page.route('**/api/v1/parse', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({
+    request_id: 'test-parse', parse_id: 'test-result', mode: 'ai', model_id: 'deepseek-flash', warnings: [],
+    items: [{ id: 'test-action', action: '提交项目书PDF', due_text: '2026年10月23日18:00前', due_date: '2026-10-23', due_at: '2026-10-23T18:00:00+08:00', location: '教学平台', materials: ['项目书PDF'], evidence: { action: '提交项目书PDF', due: '2026年10月23日18:00前', location: '教学平台', materials: ['项目书PDF'] }, review_reasons: [] }],
+  }) }));
+  await page.route('**/api/v1/deep-read', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({
+    request_id: 'test-deep', mode: 'ai_deep_read', model_id: 'deepseek-flash', cached: false,
+    summary: '先提交项目书PDF，答辩时间尚未明确。', summary_quote: '提交项目书PDF',
+    steps: [{ instruction: '先检查项目书PDF内容', why: '在上传前发现遗漏', source_quote: '项目书PDF' }, { instruction: '在截止前上传至教学平台', why: '通知给出了渠道和截止时间', source_quote: '2026年10月23日18:00前' }],
+    questions: [{ question: '答辩时间何时公布？', reason: '通知只说另行通知' }],
+  }) }));
+  await page.goto('/');
+  await page.locator('textarea').first().fill(text);
+  await page.locator('.parse-button').click();
+  await expect(page.locator('.deep-read .deep-step')).toHaveCount(2);
+  await expect(page.locator('.deep-read')).toContainText('AI 建议');
+  await expect(page.locator('.deep-read')).toContainText('答辩时间何时公布？');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.screenshot({ path: '../.local/screenshots/deep-read-mobile.png', fullPage: true });
+  await page.locator('.confirmation-row').click();
+  await page.locator('.save-panel .primary-button').click();
+  await page.locator('.task-actions .text-button').filter({ hasText: '来源' }).first().click();
+  await expect(page.locator('.saved-deep')).toContainText('先检查项目书PDF内容');
+});

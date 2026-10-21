@@ -31,10 +31,12 @@ function validateState(data) {
       if (typeof item.id !== 'string' || typeof item.action !== 'string' || !Array.isArray(item.materials) || !Array.isArray(item.review_reasons)) throw new Error('候选事项格式不正确');
       if (item.due_at && typeof item.due_at !== 'string') throw new Error('候选时间格式不正确');
     }
+    if (flow.deep_read && (JSON.stringify(flow.deep_read).length > 8000 || !flow.text.includes(flow.deep_read.summary_quote) || !Array.isArray(flow.deep_read.steps) || flow.deep_read.steps.some((step) => !flow.text.includes(step.source_quote)))) throw new Error('AI深读数据格式不正确');
   }
   const ids = new Set();
   for (const notice of data.notices) {
     if (typeof notice.id !== 'string' || typeof notice.text !== 'string' || notice.text.length > 2000 || ids.has(notice.id)) throw new Error('通知格式不正确');
+    if (notice.deep_read && (JSON.stringify(notice.deep_read).length > 8000 || !notice.text.includes(notice.deep_read.summary_quote) || !Array.isArray(notice.deep_read.steps) || notice.deep_read.steps.some((step) => !notice.text.includes(step.source_quote)))) throw new Error('AI深读来源不正确');
     ids.add(notice.id);
   }
   const taskIds = new Set();
@@ -117,9 +119,11 @@ export function createStore(adapter) {
       let notice = next.notices.find((n) => n.id === workflow.notice_id);
       if (!notice) {
         if (next.notices.length >= 100) throw new Error('已保存100条通知，请先在待办页整理旧数据');
-        notice = { id: workflow.notice_id, text: workflow.text, created_at: new Date().toISOString(), mode: workflow.mode };
+        notice = { id: workflow.notice_id, text: workflow.text, created_at: new Date().toISOString(), mode: workflow.mode,
+          deep_read: workflow.deep_read || null };
         next.notices.unshift(notice);
       }
+      if (workflow.deep_read) notice.deep_read = clone(workflow.deep_read);
       for (const candidate of candidates) {
         const id = `${notice.id}:${candidate.id}`;
         const previous = next.tasks.find((task) => task.id === id);

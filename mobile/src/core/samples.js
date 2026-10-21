@@ -21,6 +21,11 @@ export const SAMPLES = [
     items: [{ id: 'example-1', action: '领取设备', due_text: '明天下午', due_date: null, due_at: null, location: '实验楼102室', materials: ['学生证'], evidence: { action: '领取设备', due: '明天下午', location: '实验楼102室', materials: ['学生证'] }, review_reasons: ['缺少通知发布时间，不能确定“明天”的日期', '“下午”没有明确时刻，需自行确认'] }],
     warnings: ['请向通知发布者确认具体日期与时刻'],
   },
+  {
+    id: 'conditional', label: '条件申请', tag: '项目',
+    text: '有意报名研究生创新项目的同学须于2026年10月25日17:00前将申请表与导师签字版计划书上传学院系统；如导师不在校，请先邮件联系秘书申请电子签；评审结果11月2日在学院网站公布。',
+    items: [], warnings: [],
+  },
 ];
 
 export function manualCandidate() {

@@ -70,13 +70,15 @@ def test_repeated_request_is_cached_and_conflicting_body_rejected(settings, payl
 def test_invalid_json_only_gets_one_repair(settings, payload):
     calls = []
     def provider(request):
-        calls.append(1)
+        calls.append(json.loads(request.content))
         return httpx.Response(200, json={'choices': [{'message': {'content': '{not json'}}]})
     with TestClient(create_app(settings, httpx.MockTransport(provider))) as client:
         response = client.post('/api/v1/parse', json=payload, headers=AUTH)
         assert response.status_code == 502
         assert response.json()['code'] == 'INVALID_MODEL_OUTPUT'
         assert len(calls) == 2
+        assert 'items每项' in calls[1]['messages'][-1]['content']
+        assert 'steps每项' not in calls[1]['messages'][-1]['content']
 
 
 def test_empty_and_extra_model_fields_are_not_accepted(settings, payload):

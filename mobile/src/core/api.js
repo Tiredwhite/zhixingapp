@@ -42,3 +42,7 @@ export const parseNotice = (connection, text, source_time) => request(connection
   method: 'POST', data: { request_id: uid(), text, source_time, timezone: 'Asia/Shanghai' },
 });
 
+export const deepReadNotice = (connection, text, actions) => request(connection, '/api/v1/deep-read', {
+  method: 'POST', data: { request_id: uid(), text, actions },
+});
+

@@ -14,7 +14,7 @@ from .config import SERVER_ROOT, Settings
 from .errors import ApiError
 from .model import ModelClient
 from .quota import Quota, identity_hash
-from .schemas import ParseRequest, ParseResponse
+from .schemas import DeepReadRequest, DeepReadResponse, ParseRequest, ParseResponse
 from .service import ParseService
 
 logger = logging.getLogger('zhixing')
@@ -28,7 +28,7 @@ logger.propagate = False
 
 def create_app(settings: Settings | None = None, model_transport=None) -> FastAPI:
     settings = settings or Settings()
-    app = FastAPI(title='知行 API', version='0.1.0',
+    app = FastAPI(title='知行 API', version='0.2.0',
                   docs_url='/docs' if settings.app_env == 'development' else None,
                   redoc_url=None, openapi_url='/openapi.json' if settings.app_env == 'development' else None)
     app.state.settings = settings
@@ -53,8 +53,9 @@ def create_app(settings: Settings | None = None, model_transport=None) -> FastAP
         response.headers['X-Request-ID'] = request.state.request_id
         response.headers['Cache-Control'] = 'no-store'
         response.headers['X-Content-Type-Options'] = 'nosniff'
-        if request.url.path == '/api/v1/parse':
-            logger.info('parse request_id=%s status=%s elapsed_ms=%d model=%s',
+        if request.url.path in ('/api/v1/parse', '/api/v1/deep-read'):
+            logger.info('ai path=%s request_id=%s status=%s elapsed_ms=%d model=%s',
+                        request.url.path,
                         request.state.request_id, response.status_code,
                         int((time.monotonic() - started) * 1000), settings.model_id)
         return response
@@ -74,9 +75,7 @@ def create_app(settings: Settings | None = None, model_transport=None) -> FastAP
     async def storage_error(request, error):
         return JSONResponse(status_code=503, content=error_body(request, 'QUOTA_UNAVAILABLE', '调用配额暂时无法校验，请稍后重试', True))
 
-    @app.post('/api/v1/parse', response_model=ParseResponse)
-    async def parse_notice(payload: ParseRequest, request: Request):
-        request.state.request_id = str(payload.request_id)
+    def authorize(request: Request):
         expected = settings.demo_access_token.get_secret_value()
         authorization = request.headers.get('Authorization', '')
         given = authorization[7:] if authorization.startswith('Bearer ') else ''
@@ -86,7 +85,19 @@ def create_app(settings: Settings | None = None, model_transport=None) -> FastAP
                 raise ApiError(401, 'INVALID_TOKEN', '连接令牌无效，请检查连接设置')
         elif settings.app_env == 'production' or client_ip not in ('127.0.0.1', '::1', 'testclient'):
             raise ApiError(401, 'TOKEN_REQUIRED', '远程访问需要配置连接令牌')
-        return await service.parse(payload, identity_hash(expected or 'local-development'), client_ip)
+        return identity_hash(expected or 'local-development'), client_ip
+
+    @app.post('/api/v1/parse', response_model=ParseResponse)
+    async def parse_notice(payload: ParseRequest, request: Request):
+        request.state.request_id = str(payload.request_id)
+        identity, client_ip = authorize(request)
+        return await service.parse(payload, identity, client_ip)
+
+    @app.post('/api/v1/deep-read', response_model=DeepReadResponse)
+    async def deep_read(payload: DeepReadRequest, request: Request):
+        request.state.request_id = str(payload.request_id)
+        identity, client_ip = authorize(request)
+        return await service.deep_read(payload, identity, client_ip)
 
     @app.get('/healthz')
     def health():

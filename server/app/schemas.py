@@ -66,3 +66,41 @@ class ParseResponse(StrictModel):
     warnings: list[str]
     cached: bool = False
 
+
+class DeepReadRequest(StrictModel):
+    request_id: UUID
+    text: str = Field(min_length=2, max_length=2000)
+    actions: list[str] = Field(default_factory=list, max_length=5)
+
+    @field_validator('actions')
+    @classmethod
+    def short_actions(cls, values):
+        if any(not item or len(item) > 60 for item in values):
+            raise ValueError('行动名称须为1—60个字符')
+        return values
+
+
+class DeepReadStep(StrictModel):
+    instruction: str = Field(min_length=2, max_length=100)
+    why: str = Field(min_length=2, max_length=160)
+    source_quote: str = Field(min_length=1, max_length=200)
+
+
+class DeepReadQuestion(StrictModel):
+    question: str = Field(min_length=2, max_length=120)
+    reason: str = Field(min_length=2, max_length=160)
+
+
+class DeepReadResult(StrictModel):
+    summary: str = Field(min_length=2, max_length=180)
+    summary_quote: str = Field(min_length=1, max_length=200)
+    steps: list[DeepReadStep] = Field(min_length=1, max_length=5)
+    questions: list[DeepReadQuestion] = Field(default_factory=list, max_length=3)
+
+
+class DeepReadResponse(DeepReadResult):
+    request_id: str
+    model_id: str
+    mode: Literal['ai_deep_read'] = 'ai_deep_read'
+    cached: bool = False
+

@@ -76,6 +76,10 @@ DCloud开发者中心的安卓云证书状态已确认为“证书已生成”�
 
 18:20权限精简版APK生成，检查全部通过，交付到 `deliverables/知行-0.1.0.apk`。最终权限仅为INTERNET、ACCESS_NETWORK_STATE及本应用signature级内部广播保护权限。详情和SHA256见 [版本交付记录](release-0.1.0.md)。用户重新连接OrcaTerm后，仅上传该APK至服务器，核对SHA256并原子发布到 `/var/www/zhixing/downloads/zhixing-0.1.0.apk`（目录755、文件644）。公网 [安卓APK下载](https://tiredwhite.cn/downloads/zhixing-0.1.0.apk) 完整下载验证HTTP 200、20,447,068字节，SHA256与本机验签文件一致。未更改现有Nginx配置；未公开源码、连接令牌、模型密钥或签名私钥。
 
+2026-10-21的0.2.0更新继续沿用原服务与静态目录。新的无密钥归档上传为 `/home/ubuntu/zhixing-deploy_1.zip`，本机与服务器SHA256一致，66项文件经清单逐项校验后解压至 `/home/ubuntu/zhixing-20261021`。先将原后端模块备份到 `/home/ubuntu/zhixing-20261020/server/app-backup-20261021`，将网站整体备份到 `/var/www/zhixing-backup-20261021`，再替换后端模块并重启 `zhixing.service`；`server/.env`、SQLite配额数据库与虚拟环境仍在旧项目目录。网页先复制`assets/`和`static/`，最后原子替换`index.html`，保持`downloads/zhixing-0.1.0.apk`不变。Nginx配置未更改，语法检查通过。公网 `/healthz` 返回版本0.2.0，授权解析和深读的真实模型请求均返回200，首页字节摘要与本机构建相同。回归中发现原解析的格式修复提示误用深读字段，已单独将修正后的 `model.py` 按SHA256上传并同步到运行目录及暂存目录，重启成功。
+
+0.2.0 APK通过实物验签和权限检查后，上传到服务器并核对SHA256，原子发布到 `/var/www/zhixing/downloads/zhixing-0.2.0.apk`。公网 [0.2.0安卓APK](https://tiredwhite.cn/downloads/zhixing-0.2.0.apk) 完整下载验证HTTP 200、20,447,068字节、SHA256 `8359ba402133f9cbaa9a545ef3fa2c700f65aa90cbef7007f052d2a045ff6228`，与本机验签包一致。0.1.0旧包仍可下载且字节数核对正常。0.2手机覆盖更新和实际AI深读体验仍待机主验证。
+
 真机的 `127.0.0.1` 指向手机自身；请在“连接设置”填写 `https://tiredwhite.cn` 和应用连接令牌。本机开发后端只绑定电脑回环地址；线上后端绑定服务器的127.0.0.1:8002，通过Nginx提供HTTPS访问。
 
 ## 运行验证

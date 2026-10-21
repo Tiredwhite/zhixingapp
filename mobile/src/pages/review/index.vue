@@ -5,6 +5,19 @@
     <view v-if="!workflow" class="card empty-state"><text class="empty-title">没有待核对的通知</text><text class="empty-description">回到输入页，粘贴通知或体验预置示例。</text><button class="primary-button" @click="goBack">返回输入</button></view>
     <template v-else>
       <view v-if="workflow.mode === 'example'" class="inline-message"><Icon name="info" :size="17" color="#a3613b" /><text>当前为预置示例，未调用 AI。保存后也会保留“示例”标记。</text></view>
+      <view v-if="workflow.mode === 'ai'" class="deep-read card">
+        <view class="section-heading"><view><text class="eyebrow">LIVE AI · 第二层理解</text><text class="deep-title">AI 深读这条通知</text></view><text class="tag">{{ deepBusy ? '正在生成' : deepRead ? '真实 AI 建议' : '等待分析' }}</text></view>
+        <text class="deep-intro">提取只是第一步。这里把通知变成执行路径，并指出还需要问清的事。</text>
+        <view v-if="deepBusy" class="deep-status"><Icon name="spark" :size="19" /><text>正在结合原文推演执行步骤，通常需要几秒…</text></view>
+        <view v-else-if="deepRead" class="deep-content">
+          <view class="deep-summary"><text class="deep-label">AI 概括</text><text class="deep-summary-text">{{ deepRead.summary }}</text><text class="deep-quote">依据：“{{ deepRead.summary_quote }}”</text></view>
+          <text class="deep-label deep-steps-label">建议这样推进</text>
+          <view v-for="(step, index) in deepRead.steps" :key="index" class="deep-step"><text class="deep-number">{{ String(index + 1).padStart(2, '0') }}</text><view><text class="deep-step-title">{{ step.instruction }}</text><text class="deep-step-why">{{ step.why }}</text><text class="deep-quote">关联原文：“{{ step.source_quote }}”</text></view></view>
+          <view v-if="deepRead.questions.length" class="deep-questions"><text class="deep-label">办理前值得问清</text><view v-for="(item, index) in deepRead.questions" :key="index" class="deep-question"><text>{{ item.question }}</text><text class="deep-step-why">{{ item.reason }}</text></view></view>
+          <text class="deep-boundary">以上是 AI 建议，不是学校新增要求；以原文和实际通知为准。</text>
+        </view>
+        <view v-else class="deep-fallback"><text>{{ deepError || '正在准备深读。' }}</text><button class="text-button" @click="runDeepRead">重试 AI 深读</button></view>
+      </view>
       <view class="review-layout">
         <view class="candidate-list">
           <view v-for="(item, index) in items" :key="item.id" class="card candidate-card" :class="{ 'not-selected': !item.selected }">
@@ -31,22 +44,42 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
+import { onUnload } from '@dcloudio/uni-app';
 import AppHeader from '../../components/AppHeader.vue';
 import ConnectionPanel from '../../components/ConnectionPanel.vue';
 import Icon from '../../components/Icon.vue';
 import { repository, reportError } from '../../core/repository.js';
 import { combineDue, dueParts, uid } from '../../core/dates.js';
 import { manualCandidate } from '../../core/samples.js';
+import { deepReadNotice } from '../../core/api.js';
 
 const workflow = repository.state.workflow;
 const items = ref((workflow?.items || []).map((item) => ({ ...item, ...dueParts(item), selected: true, location: item.location || '', materialText: (item.materials || []).join('、') })));
 const confirmed = ref(false), saving = ref(false), saveError = ref(''), settingsOpen = ref(false), sourceItem = ref(null);
+const deepRead = ref(workflow?.deep_read || null), deepBusy = ref(false), deepError = ref('');
+let activeDeepRead, deepVersion = 0;
+onMounted(() => { if (workflow?.mode === 'ai' && !deepRead.value) runDeepRead(); });
+onUnload(() => { deepVersion++; activeDeepRead?.cancel(); });
 const selectedCount = computed(() => items.value.filter((item) => item.selected).length);
 const modeLabel = computed(() => ({ ai: '真实 AI 解析', example: '预置示例', manual: '手动整理' }[workflow?.mode] || '待核对'));
 function goBack() { uni.navigateBack({ fail: () => uni.reLaunch({ url: '/pages/home/index' }) }); }
 function addCandidate() { const item = manualCandidate(); item.id = `manual-${uid()}`; items.value.push({ ...item, ...dueParts(item), selected: true, location: '', materialText: '', origin_mode: 'manual' }); confirmed.value = false; }
 function showSource(item) { sourceItem.value = item; }
+async function runDeepRead() {
+  if (deepBusy.value || !workflow?.text) return;
+  const version = ++deepVersion;
+  deepBusy.value = true; deepError.value = '';
+  try {
+    activeDeepRead = deepReadNotice(repository.state.connection, workflow.text, items.value.filter((item) => item.selected).map((item) => item.action.trim()).filter(Boolean));
+    const result = await activeDeepRead.promise;
+    if (version !== deepVersion) return;
+    if (result.mode !== 'ai_deep_read' || !Array.isArray(result.steps) || !Array.isArray(result.questions) || !workflow.text.includes(result.summary_quote) || result.steps.some((step) => !workflow.text.includes(step.source_quote))) throw new Error('AI 深读未通过原文核对，请稍后重试');
+    deepRead.value = result;
+    repository.setWorkflow({ ...workflow, deep_read: result });
+  } catch (error) { if (version === deepVersion) deepError.value = error.message || 'AI 深读暂时不可用'; }
+  finally { if (version === deepVersion) { deepBusy.value = false; activeDeepRead = null; } }
+}
 const sourceSegments = computed(() => {
   const original = workflow?.text || '';
   const evidence = sourceItem.value?.evidence || {};
@@ -75,7 +108,7 @@ function save() {
       const { selected, date, time, materialText, ...data } = item;
       return { ...data, action: item.action.trim(), ...combineDue(date.trim(), time.trim()), materials, location: item.location.trim() || null, user_confirmed: true };
     });
-    repository.saveTasks(workflow, selected);
+    repository.saveTasks({ ...workflow, deep_read: deepRead.value }, selected);
     uni.showToast({ title: '已保存到本机', icon: 'success' });
     uni.reLaunch({ url: '/pages/tasks/index' });
   } catch (error) { saveError.value = error.message; reportError(error); }
@@ -85,6 +118,24 @@ function save() {
 
 <style scoped lang="scss">
 .review-intro { padding: 37px 0 27px; }
+.deep-read { padding: 25px; margin-bottom: 24px; background: linear-gradient(145deg, #fdfefa, #edf4e9); border-color: #d6e5d3; }
+.deep-title { display: block; font-size: 22px; font-weight: 650; margin-top: 6px; }
+.deep-intro { display: block; color: #7b8f7b; font-size: 11px; line-height: 1.7; margin-top: 8px; }
+.deep-status, .deep-fallback { display: flex; align-items: center; gap: 9px; color: #638064; font-size: 12px; padding: 22px 0 5px; }
+.deep-fallback { justify-content: space-between; }
+.deep-content { margin-top: 19px; }
+.deep-summary { background: #fffefa; border: 1px solid #e4ecdf; border-radius: 14px; padding: 15px 17px; }
+.deep-label { display: block; color: #6c8b69; font-size: 10px; font-weight: 650; letter-spacing: .7px; }
+.deep-summary-text { display: block; font-size: 14px; font-weight: 600; line-height: 1.7; margin: 7px 0; }
+.deep-quote { display: block; font-size: 10px; color: #8ea087; line-height: 1.6; margin-top: 4px; }
+.deep-steps-label { margin: 19px 0 9px; }
+.deep-step { display: flex; gap: 14px; background: #fffefa; border: 1px solid #e4ecdf; border-radius: 13px; padding: 13px 15px; margin-top: 7px; }
+.deep-number { font-size: 17px; font-weight: 650; color: #a8bca0; }
+.deep-step-title { display: block; color: #315341; font-size: 12px; font-weight: 600; line-height: 1.65; }
+.deep-step-why { display: block; font-size: 11px; color: #788c78; line-height: 1.7; margin-top: 3px; }
+.deep-questions { margin-top: 17px; }
+.deep-question { background: #fbf5e9; border-radius: 10px; padding: 11px 13px; margin-top: 7px; color: #8b6d43; font-size: 11px; }
+.deep-boundary { display: block; color: #8a9b83; font-size: 10px; line-height: 1.7; margin-top: 16px; }
 .review-subtitle { display: block; color: #87927e; font-size: 12px; margin-top: 13px; line-height: 1.8; }
 .review-layout { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(0, 1fr); gap: 25px; align-items: start; }
 .candidate-card { padding: 25px; margin-bottom: 17px; transition: opacity .15s; }
@@ -116,5 +167,5 @@ function save() {
 .source-highlight { margin: 22px 0; color: #61765f; font-size: 13px; white-space: pre-wrap; line-height: 2.2; }
 .highlighted { background: #e4ebca; color: #35522f; border-radius: 3px; }
 .mobile-back { display: none; }
-@media (max-width: 700px) { .review-intro { padding-top: 22px; } .review-intro .page-title { font-size: 24px; } .review-intro .section-heading { align-items: flex-end; } .review-layout { display: flex; flex-direction: column; gap: 15px; } .candidate-list, .review-aside { width: 100%; } .candidate-card { padding: 21px 18px; } .mobile-back { display: flex; margin-bottom: 19px; } .extra-fields { grid-template-columns: 1fr; gap: 0; } .original-card { padding: 21px; } .save-panel { padding-bottom: 15px; } .review-intro .tag { font-size: 9px; flex-shrink: 0; } }
+@media (max-width: 700px) { .review-intro { padding-top: 22px; } .review-intro .page-title { font-size: 24px; } .review-intro .section-heading { align-items: flex-end; } .deep-read { padding: 18px; } .deep-title { font-size: 19px; } .review-layout { display: flex; flex-direction: column; gap: 15px; } .candidate-list, .review-aside { width: 100%; } .candidate-card { padding: 21px 18px; } .mobile-back { display: flex; margin-bottom: 19px; } .extra-fields { grid-template-columns: 1fr; gap: 0; } .original-card { padding: 21px; } .save-panel { padding-bottom: 15px; } .review-intro .tag { font-size: 9px; flex-shrink: 0; } }
 </style>
