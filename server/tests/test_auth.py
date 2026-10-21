@@ -61,3 +61,12 @@ def test_registration_collects_no_extra_identity_fields_and_enforces_password_le
         assert short.status_code == 400
         bad_name = client.post('/api/v1/auth/register', json=credentials(username='用户甲'))
         assert bad_name.status_code == 400
+
+
+def test_production_api_requires_an_account_session_even_with_legacy_shared_token(settings):
+    production = settings.model_copy(update={'app_env': 'production'})
+    with TestClient(create_app(production)) as client:
+        response = client.post('/api/v1/chat', headers={'Authorization': 'Bearer test-access'},
+                               json={'messages': [{'role': 'user', 'content': '你好'}]})
+    assert response.status_code == 401
+    assert response.json()['code'] == 'LOGIN_REQUIRED'

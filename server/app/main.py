@@ -30,7 +30,7 @@ logger.propagate = False
 
 def create_app(settings: Settings | None = None, model_transport=None) -> FastAPI:
     settings = settings or Settings()
-    app = FastAPI(title='知行 API', version='0.3.2',
+    app = FastAPI(title='知行 API', version='0.3.3',
                   docs_url='/docs' if settings.app_env == 'development' else None,
                   redoc_url=None, openapi_url='/openapi.json' if settings.app_env == 'development' else None)
     app.state.settings = settings
@@ -66,6 +66,10 @@ def create_app(settings: Settings | None = None, model_transport=None) -> FastAP
                         request.url.path,
                         request.state.request_id, response.status_code,
                         int((time.monotonic() - started) * 1000), settings.model_id)
+        elif request.url.path.startswith('/api/v1/documents/'):
+            logger.info('document path=%s request_id=%s status=%s elapsed_ms=%d',
+                        request.url.path, request.state.request_id, response.status_code,
+                        int((time.monotonic() - started) * 1000))
         return response
 
     def error_body(request, code, message, retryable=False):
@@ -77,7 +81,10 @@ def create_app(settings: Settings | None = None, model_transport=None) -> FastAP
 
     @app.exception_handler(RequestValidationError)
     async def input_error(request, error):
-        return JSONResponse(status_code=400, content=error_body(request, 'INVALID_INPUT', '请检查通知长度、发布时间与请求格式'))
+        message = ('文件上传请求不完整，请重新选择文档后重试'
+                   if request.url.path.startswith('/api/v1/documents/')
+                   else '请检查通知长度、发布时间与请求格式')
+        return JSONResponse(status_code=400, content=error_body(request, 'INVALID_INPUT', message))
 
     @app.exception_handler(sqlite3.Error)
     async def storage_error(request, error):
@@ -88,15 +95,17 @@ def create_app(settings: Settings | None = None, model_transport=None) -> FastAP
         authorization = request.headers.get('Authorization', '')
         given = authorization[7:] if authorization.startswith('Bearer ') else ''
         client_ip = request.client.host if request.client else 'unknown'
-        if expected and hmac.compare_digest(expected.encode(), given.encode()):
+        if settings.app_env != 'production' and expected and hmac.compare_digest(expected.encode(), given.encode()):
             return identity_hash(expected), client_ip
         username = accounts.authenticate(given)
         if username:
             return identity_hash(f'account:{username}'), client_ip
+        if settings.app_env == 'production':
+            raise ApiError(401, 'LOGIN_REQUIRED', '请先登录账号')
         if expected:
             raise ApiError(401, 'INVALID_TOKEN', '账号登录已失效，请重新登录')
-        if settings.app_env == 'production' or client_ip not in ('127.0.0.1', '::1', 'testclient'):
-            raise ApiError(401, 'TOKEN_REQUIRED', '远程访问需要配置连接令牌')
+        if client_ip not in ('127.0.0.1', '::1', 'testclient'):
+            raise ApiError(401, 'LOGIN_REQUIRED', '请先登录账号')
         return identity_hash(expected or 'local-development'), client_ip
 
     @app.post('/api/v1/auth/register', response_model=AccountRegistrationResponse, status_code=201)
@@ -160,7 +169,17 @@ def create_app(settings: Settings | None = None, model_transport=None) -> FastAP
         authorize(request)
         if not request.headers.get('content-type', '').startswith('application/octet-stream'):
             raise ApiError(415, 'DOCUMENT_UNSUPPORTED', '请求文件类型不受支持')
-        raw = await request.body()
+        content_length = request.headers.get('content-length')
+        if content_length and content_length.isdigit() and int(content_length) > MAX_DOCUMENT_BYTES:
+            raise ApiError(413, 'DOCUMENT_TOO_LARGE', '文件不能超过 20 MB')
+        chunks = []
+        total = 0
+        async for chunk in request.stream():
+            total += len(chunk)
+            if total > MAX_DOCUMENT_BYTES:
+                raise ApiError(413, 'DOCUMENT_TOO_LARGE', '文件不能超过 20 MB')
+            chunks.append(chunk)
+        raw = b''.join(chunks)
         text, kind = extract_document(request.query_params.get('filename'), raw)
         return {'text': text, 'kind': kind, 'characters': len(text)}
 

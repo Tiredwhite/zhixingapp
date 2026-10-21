@@ -1,4 +1,5 @@
 import { uid } from './dates.js';
+import { expireAccountSession } from './account.js';
 
 function baseURL(connection) {
   const base = connection.apiBase || import.meta.env.VITE_API_BASE_URL || '';
@@ -12,7 +13,12 @@ function baseURL(connection) {
 function accessToken(connection) {
   try {
     const session = typeof uni !== 'undefined' && uni.getStorageSync('zhixing.account.session');
-    if (session && typeof session.access_token === 'string' && session.access_token) return session.access_token;
+    if (session) {
+      const expiry = Number(session.expires_at);
+      if (typeof session.access_token === 'string' && session.access_token && Number.isFinite(expiry) && expiry > Math.floor(Date.now() / 1000)) return session.access_token;
+      uni.removeStorageSync('zhixing.account.session');
+      return '';
+    }
   } catch { /* Fall back to the configured connection token. */ }
   return connection?.token || '';
 }
@@ -37,6 +43,7 @@ export function request(connection, path, { method = 'GET', data, timeout = 2500
         if (cancelled) return;
         if (response.statusCode >= 200 && response.statusCode < 300) resolve(response.data);
         else {
+          expireAccountSession(response.data);
           const error = new Error(response.data?.message || `请求失败（${response.statusCode}），请检查连接设置`);
           error.code = response.data?.code; error.requestId = response.data?.request_id; reject(error);
         }
@@ -65,7 +72,15 @@ function decodeDocumentResponse(response) {
     try { data = JSON.parse(data); } catch { data = null; }
   }
   if (response.statusCode >= 200 && response.statusCode < 300 && data?.text) return data;
-  const error = new Error(data?.message || `文档读取失败（${response.statusCode}）`);
+  const fallbackMessages = {
+    400: '服务器没有收到完整文档，请重新选择文件；若仍失败，请先在文件管理器确认文档可以打开',
+    413: '文件超过 20 MB，请压缩或拆分后再导入',
+    415: '格式暂不支持，请选择 PDF、.docx 或 .doc 文件',
+    422: '无法从文档中提取文字，请确认不是扫描图片或损坏文件',
+    503: '文档服务暂时不可用，请稍后重试',
+  };
+  const error = new Error(data?.message || fallbackMessages[response.statusCode] || `文档读取失败（${response.statusCode}）`);
+  if (response.statusCode === 401) expireAccountSession(data);
   error.code = data?.code; error.requestId = data?.request_id; throw error;
 }
 
@@ -77,6 +92,15 @@ export function extractDocument(connection, filePath, filename = '') {
     if (filePath.startsWith('content://') && typeof uni.getFileSystemManager === 'function') {
       try {
         uni.getFileSystemManager().readFile({ filePath, success({ data }) {
+          const byteLength = data?.byteLength ?? data?.length;
+          if (!Number.isFinite(byteLength) || byteLength === 0) {
+            reject(new Error('手机没有读取到文档内容，请重新选择文件，并确认文件已完整下载到本机'));
+            return;
+          }
+          if (byteLength > 20 * 1024 * 1024) {
+            reject(new Error('文件超过 20 MB，请压缩或拆分后再导入'));
+            return;
+          }
           uni.request({
             url: `${url}-raw?filename=${encodeURIComponent(filename)}`, method: 'POST', data, timeout: 35000,
             header: { 'Content-Type': 'application/octet-stream', ...authorizationHeader(connection) },

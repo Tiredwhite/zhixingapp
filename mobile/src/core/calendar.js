@@ -27,6 +27,10 @@ function putInteger(values, key, value) {
   plus.android.invoke(values, 'put', key, integerValue);
 }
 
+function putText(values, key, value) {
+  plus.android.invoke(values, 'put', key, value);
+}
+
 function findWritableCalendar(resolver, Calendars) {
   const columns = [Calendars._ID, Calendars.CALENDAR_ACCESS_LEVEL, Calendars.VISIBLE];
   const cursor = plus.android.importClass(plus.android.invoke(resolver, 'query', Calendars.CONTENT_URI, columns, null, null, null));
@@ -43,18 +47,48 @@ function findWritableCalendar(resolver, Calendars) {
   } finally {
     plus.android.invoke(cursor, 'close');
   }
-  throw new Error('手机中没有可写入的日历，请先在系统日历添加一个日历账户');
+  return null;
+}
+
+function createLocalCalendar(resolver, Calendars, CalendarContract, timezone) {
+  const accountName = '知行本机日历';
+  const accountType = CalendarContract.ACCOUNT_TYPE_LOCAL;
+  const builder = plus.android.invoke(Calendars.CONTENT_URI, 'buildUpon');
+  plus.android.invoke(builder, 'appendQueryParameter', CalendarContract.CALLER_IS_SYNCADAPTER, 'true');
+  plus.android.invoke(builder, 'appendQueryParameter', Calendars.ACCOUNT_NAME, accountName);
+  plus.android.invoke(builder, 'appendQueryParameter', Calendars.ACCOUNT_TYPE, accountType);
+  const syncAdapterUri = plus.android.invoke(builder, 'build');
+  const values = plus.android.newObject('android.content.ContentValues');
+  putText(values, Calendars.ACCOUNT_NAME, accountName);
+  putText(values, Calendars.ACCOUNT_TYPE, accountType);
+  putText(values, Calendars.NAME, 'zhixing-local');
+  putText(values, Calendars.CALENDAR_DISPLAY_NAME, '知行');
+  putText(values, Calendars.OWNER_ACCOUNT, accountName);
+  putText(values, Calendars.CALENDAR_TIME_ZONE, timezone);
+  putText(values, Calendars.ALLOWED_REMINDERS, '0,1');
+  putInteger(values, Calendars.CALENDAR_COLOR, -11804109);
+  putInteger(values, Calendars.CALENDAR_ACCESS_LEVEL, 700);
+  putInteger(values, Calendars.MAX_REMINDERS, 5);
+  putInteger(values, Calendars.VISIBLE, 1);
+  putInteger(values, Calendars.SYNC_EVENTS, 1);
+  const calendarUri = plus.android.invoke(resolver, 'insert', syncAdapterUri, values);
+  if (!calendarUri) throw new Error('系统日历暂不允许创建本机日历，请确认手机系统日历服务可用');
+  const calendarId = Number(plus.android.invoke(calendarUri, 'getLastPathSegment'));
+  if (!Number.isSafeInteger(calendarId) || calendarId <= 0) throw new Error('手机日历没有返回本机日历编号');
+  return calendarId;
 }
 
 function insertAndroidEvent(task, timing) {
   const main = plus.android.runtimeMainActivity();
   const resolver = plus.android.invoke(main, 'getContentResolver');
   const Calendars = plus.android.importClass('android.provider.CalendarContract$Calendars');
+  const CalendarContract = plus.android.importClass('android.provider.CalendarContract');
   const Events = plus.android.importClass('android.provider.CalendarContract$Events');
   const Reminders = plus.android.importClass('android.provider.CalendarContract$Reminders');
   const TimeZone = plus.android.importClass('java.util.TimeZone');
-  const calendarId = findWritableCalendar(resolver, Calendars);
   const timezone = plus.android.invoke(plus.android.invoke(TimeZone, 'getDefault'), 'getID');
+  const calendarId = findWritableCalendar(resolver, Calendars)
+    ?? createLocalCalendar(resolver, Calendars, CalendarContract, timezone);
   const event = plus.android.newObject('android.content.ContentValues');
   putLong(event, 'calendar_id', calendarId);
   putLong(event, 'dtstart', timing.startTime);

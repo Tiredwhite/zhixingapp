@@ -31,7 +31,7 @@ test('account session is used for both JSON requests and document uploads', asyn
   const originalUni = globalThis.uni;
   let requestOptions, uploadOptions;
   globalThis.uni = {
-    getStorageSync(key) { return key === 'zhixing.account.session' ? { access_token: 'account-session' } : null; },
+    getStorageSync(key) { return key === 'zhixing.account.session' ? { access_token: 'account-session', expires_at: Math.floor(Date.now() / 1000) + 3600 } : null; },
     request(options) {
       requestOptions = options;
       options.success({ statusCode: 200, data: { reply: '答复' } });
@@ -50,5 +50,80 @@ test('account session is used for both JSON requests and document uploads', asyn
   } finally {
     if (originalUni === undefined) delete globalThis.uni;
     else globalThis.uni = originalUni;
+  }
+});
+
+test('expired account sessions are cleared and never fall back to a shared token', async () => {
+  const originalUni = globalThis.uni;
+  let requestOptions, removed = false;
+  globalThis.uni = {
+    getStorageSync(key) { return key === 'zhixing.account.session' ? { access_token: 'expired-session', expires_at: 1 } : null; },
+    removeStorageSync(key) { removed = key === 'zhixing.account.session'; },
+    request(options) { requestOptions = options; options.success({ statusCode: 200, data: { reply: 'ok' } }); return { abort() {} }; },
+  };
+  try {
+    await chatWithAI({ apiBase: 'https://example.test', token: 'legacy-shared-token' }, [{ role: 'user', content: '你好' }]);
+    assert.equal(removed, true);
+    assert.equal(requestOptions.header.Authorization, undefined);
+  } finally {
+    if (originalUni === undefined) delete globalThis.uni;
+    else globalThis.uni = originalUni;
+  }
+});
+
+test('raw content URI uploads reject empty files and explain 413 responses', async () => {
+  const previous = globalThis.uni;
+  let sentRequest = false;
+  const bytes = new Uint8Array([37, 80, 68, 70]).buffer;
+  globalThis.uni = {
+    getStorageSync(key) { return key === 'zhixing.account.session' ? { access_token: 'active', expires_at: Math.floor(Date.now() / 1000) + 60 } : null; },
+    getFileSystemManager() { return { readFile({ success }) { success({ data: bytes }); } }; },
+    request(options) {
+      sentRequest = true;
+      assert.equal(options.header['Content-Type'], 'application/octet-stream');
+      assert.equal(options.data, bytes);
+      options.success({ statusCode: 413, data: '<html>request too large</html>' });
+      return { abort() {} };
+    },
+  };
+  try {
+    await assert.rejects(
+      extractDocument({ apiBase: 'https://example.test' }, 'content://document/1', 'notice.pdf'),
+      /20 MB/,
+    );
+    assert.equal(sentRequest, true);
+    globalThis.uni.getFileSystemManager = () => ({ readFile({ success }) { success({ data: new ArrayBuffer(0) }); } });
+    sentRequest = false;
+    await assert.rejects(
+      extractDocument({ apiBase: 'https://example.test' }, 'content://document/1', 'notice.pdf'),
+      /没有读取到文档内容/,
+    );
+    assert.equal(sentRequest, false);
+  } finally {
+    if (previous === undefined) delete globalThis.uni;
+    else globalThis.uni = previous;
+  }
+});
+
+test('legacy Word uploads reach the server and show a useful 400 message', async () => {
+  const previous = globalThis.uni;
+  let uploadOptions;
+  globalThis.uni = {
+    getStorageSync(key) { return key === 'zhixing.account.session' ? { access_token: 'active', expires_at: Math.floor(Date.now() / 1000) + 60 } : null; },
+    uploadFile(options) {
+      uploadOptions = options;
+      options.success({ statusCode: 400, data: JSON.stringify({ code: 'INVALID_INPUT', message: '文件上传请求不完整，请重新选择文档后重试' }) });
+    },
+  };
+  try {
+    await assert.rejects(
+      extractDocument({ apiBase: 'https://example.test' }, '/tmp/notice.doc', 'notice.doc'),
+      /重新选择文档/,
+    );
+    assert.equal(uploadOptions.filePath, '/tmp/notice.doc');
+    assert.equal(uploadOptions.name, 'file');
+  } finally {
+    if (previous === undefined) delete globalThis.uni;
+    else globalThis.uni = previous;
   }
 });

@@ -45,7 +45,7 @@
 
 <script setup>
 import { computed, onMounted, ref } from 'vue';
-import { onUnload } from '@dcloudio/uni-app';
+import { onShow, onUnload } from '@dcloudio/uni-app';
 import AppHeader from '../../components/AppHeader.vue';
 import ConnectionPanel from '../../components/ConnectionPanel.vue';
 import Icon from '../../components/Icon.vue';
@@ -53,13 +53,15 @@ import { repository, reportError } from '../../core/repository.js';
 import { combineDue, dueParts, uid } from '../../core/dates.js';
 import { manualCandidate } from '../../core/samples.js';
 import { deepReadNotice } from '../../core/api.js';
+import { requireAccountLogin } from '../../core/account.js';
 
 const workflow = repository.state.workflow;
 const items = ref((workflow?.items || []).map((item) => ({ ...item, ...dueParts(item), selected: true, location: item.location || '', materialText: (item.materials || []).join('、') })));
 const confirmed = ref(false), saving = ref(false), saveError = ref(''), settingsOpen = ref(false), sourceItem = ref(null);
 const deepRead = ref(workflow?.deep_read || null), deepBusy = ref(false), deepError = ref('');
 let activeDeepRead, deepVersion = 0;
-onMounted(() => { if (workflow?.mode === 'ai' && !deepRead.value) runDeepRead(); });
+onMounted(() => { if (requireAccountLogin() && workflow?.mode === 'ai' && !deepRead.value) runDeepRead(); });
+onShow(() => { requireAccountLogin(); });
 onUnload(() => { deepVersion++; activeDeepRead?.cancel(); });
 const selectedCount = computed(() => items.value.filter((item) => item.selected).length);
 const modeLabel = computed(() => ({ ai: '真实 AI 解析', example: '预置示例', manual: '手动整理' }[workflow?.mode] || '待核对'));

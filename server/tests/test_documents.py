@@ -1,8 +1,11 @@
 from io import BytesIO
+from pathlib import Path
+from types import SimpleNamespace
 
 from docx import Document
 from fastapi.testclient import TestClient
 
+from app import documents
 from app.main import create_app
 
 AUTH = {'Authorization': 'Bearer test-access'}
@@ -38,10 +41,47 @@ def test_docx_raw_endpoint_supports_app_content_uri_upload(settings):
     assert response.json()['kind'] == 'Word'
 
 
+def test_raw_upload_reports_empty_content_and_rejects_oversize_before_reading(settings):
+    with TestClient(create_app(settings)) as client:
+        headers = {**AUTH, 'Content-Type': 'application/octet-stream'}
+        empty = client.post('/api/v1/documents/extract-raw?filename=notice.pdf', headers=headers, content=b'')
+        assert empty.status_code == 400
+        assert empty.json()['code'] == 'DOCUMENT_EMPTY'
+        large = client.post('/api/v1/documents/extract-raw?filename=notice.pdf',
+                            headers={**headers, 'Content-Length': str(20 * 1024 * 1024 + 1)}, content=b'')
+        assert large.status_code == 413
+        assert large.json()['code'] == 'DOCUMENT_TOO_LARGE'
+
+
 def test_document_upload_auth_type_and_size_are_enforced(settings):
     with TestClient(create_app(settings)) as client:
         assert client.post('/api/v1/documents/extract', files={'file': ('通知.docx', docx_bytes())}).status_code == 401
         unsupported = client.post('/api/v1/documents/extract', headers=AUTH, files={'file': ('通知.txt', b'text')})
         assert unsupported.status_code == 415
-        too_large = client.post('/api/v1/documents/extract', headers=AUTH, files={'file': ('通知.pdf', b'x' * (12 * 1024 * 1024 + 1))})
+        too_large = client.post('/api/v1/documents/extract', headers=AUTH, files={'file': ('通知.pdf', b'x' * (20 * 1024 * 1024 + 1))})
         assert too_large.status_code == 413
+
+
+def test_legacy_doc_uses_antiword_and_normalizes_extracted_text(monkeypatch):
+    def fake_run(command, **kwargs):
+        assert command[1:3] == ['-m', 'UTF-8.txt']
+        assert Path(command[3]).read_bytes() == b'legacy Word bytes'
+        assert kwargs['timeout'] == 10
+        return SimpleNamespace(returncode=0, stdout='提交项目书\n\n教学平台'.encode())
+
+    monkeypatch.setattr(documents.shutil, 'which', lambda name: '/usr/bin/antiword' if name == 'antiword' else None)
+    monkeypatch.setattr(documents.subprocess, 'run', fake_run)
+    text, kind = documents.extract_document('通知.doc', b'legacy Word bytes')
+    assert kind == 'Word'
+    assert text == '提交项目书\n教学平台'
+
+
+def test_legacy_doc_explains_when_server_converter_is_missing(monkeypatch):
+    monkeypatch.setattr(documents.shutil, 'which', lambda _name: None)
+    try:
+        documents.extract_document('通知.doc', b'legacy Word bytes')
+    except documents.ApiError as error:
+        assert error.status == 503
+        assert '.docx' in error.message
+    else:
+        raise AssertionError('legacy DOC without a converter must return a clear error')

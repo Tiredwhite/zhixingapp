@@ -14,7 +14,6 @@
       <view class="account-register"><text>还没有账号？</text><button class="inline-link" @click="openRegister">前往网页注册</button></view>
       <text class="account-privacy">只使用账号名和密码，不收集手机号或身份信息。忘记密码时目前无法找回，请妥善保管。</text>
     </view>
-    <button class="offline-link" @click="continueOffline">先以本机模式继续</button>
     <ConnectionPanel :visible="settingsOpen" @close="settingsOpen = false" />
   </view>
 </template>
@@ -55,7 +54,6 @@ function openRegister() {
   uni.navigateTo({ url: '/pages/register/index' });
   // #endif
 }
-function continueOffline() { uni.reLaunch({ url: '/pages/home/index' }); }
 </script>
 
 <style scoped lang="scss">
@@ -67,6 +65,6 @@ function continueOffline() { uni.reLaunch({ url: '/pages/home/index' }); }
 .account-eyebrow { display: block; color: #8b9a7d; font-size: 9px; letter-spacing: 2px; }.account-title { display: block; margin-top: 11px; font-size: 25px; font-weight: 650; }.account-subtitle { display: block; margin: 8px 0 27px; color: #929b88; font-size: 11px; }
 .field-label { display: block; margin: 15px 0 8px; color: #586c57; font-size: 11px; }.field-input { box-sizing: border-box; width: 100%; height: 46px; padding: 0 13px; border: 1px solid #e2e7da; border-radius: 10px; background: #fcfcf8; color: #294b3e; font-size: 12px; }
 .account-error { margin-top: 14px; color: #a46445; font-size: 11px; line-height: 1.7; }.account-submit { width: 100%; margin-top: 23px; }.account-register { display: flex; justify-content: center; gap: 5px; margin-top: 18px; color: #929b88; font-size: 11px; }.inline-link { display: inline; padding: 0; color: #557a4c; font-size: 11px; font-weight: 600; }
-.account-privacy { display: block; margin-top: 25px; color: #a0a795; font-size: 9px; line-height: 1.8; }.offline-link { margin-top: 19px; color: #788873; font-size: 11px; }
+.account-privacy { display: block; margin-top: 25px; color: #a0a795; font-size: 9px; line-height: 1.8; }
 @media (max-width: 430px) { .account-page { padding: 32px 16px; }.account-card { padding: 26px 22px; } }
 </style>

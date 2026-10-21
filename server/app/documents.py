@@ -1,5 +1,9 @@
 from io import BytesIO
 from pathlib import PurePath
+import shutil
+import subprocess
+from pathlib import Path
+from tempfile import TemporaryDirectory
 from zipfile import BadZipFile, ZipFile
 
 from docx import Document
@@ -7,7 +11,7 @@ from pypdf import PdfReader
 
 from .errors import ApiError
 
-MAX_DOCUMENT_BYTES = 12 * 1024 * 1024
+MAX_DOCUMENT_BYTES = 20 * 1024 * 1024
 MAX_EXTRACTED_CHARS = 12000
 MAX_PDF_PAGES = 80
 MAX_DOCX_ENTRIES = 1000
@@ -49,6 +53,32 @@ def _extract_docx(data: bytes) -> str:
         raise
     except (BadZipFile, KeyError, ValueError, OSError) as exc:
         raise ApiError(422, "DOCUMENT_INVALID", "Word 文件损坏或格式不受支持") from exc
+
+
+def _extract_doc(data: bytes) -> str:
+    antiword = shutil.which("antiword")
+    if not antiword:
+        raise ApiError(503, "DOCUMENT_CONVERTER_UNAVAILABLE", "服务器暂未启用旧版 .doc 解析，请先另存为 .docx 再试")
+    try:
+        with TemporaryDirectory(prefix="zhixing-doc-") as temporary:
+            source = Path(temporary) / "notice.doc"
+            source.write_bytes(data)
+            result = subprocess.run(
+                [antiword, "-m", "UTF-8.txt", str(source)],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.DEVNULL,
+                timeout=10,
+                check=False,
+            )
+        if result.returncode != 0:
+            raise ApiError(422, "DOCUMENT_INVALID", "Word 文件损坏或格式不受支持")
+        return _normalize_text(result.stdout.decode("utf-8", errors="replace"))
+    except subprocess.TimeoutExpired as exc:
+        raise ApiError(422, "DOCUMENT_TOO_COMPLEX", "旧版 Word 文档处理超时，请另存为 .docx 后再试") from exc
+    except ApiError:
+        raise
+    except OSError as exc:
+        raise ApiError(503, "DOCUMENT_CONVERTER_UNAVAILABLE", "服务器暂时无法读取旧版 .doc 文档") from exc
     except Exception as exc:
         raise ApiError(422, "DOCUMENT_INVALID", "Word 文件损坏或格式不受支持") from exc
 
@@ -56,7 +86,7 @@ def _extract_docx(data: bytes) -> str:
 def extract_document(filename: str | None, data: bytes) -> tuple[str, str]:
     extension = PurePath(filename or "").suffix.lower()
     if len(data) > MAX_DOCUMENT_BYTES:
-        raise ApiError(413, "DOCUMENT_TOO_LARGE", "文件不能超过 12 MB")
+        raise ApiError(413, "DOCUMENT_TOO_LARGE", "文件不能超过 20 MB")
     if not data:
         raise ApiError(400, "DOCUMENT_EMPTY", "所选文件为空")
     if extension == ".pdf":
@@ -65,8 +95,11 @@ def extract_document(filename: str | None, data: bytes) -> tuple[str, str]:
     elif extension == ".docx":
         text = _extract_docx(data)
         kind = "Word"
+    elif extension == ".doc":
+        text = _extract_doc(data)
+        kind = "Word"
     else:
-        raise ApiError(415, "DOCUMENT_UNSUPPORTED", "目前支持 PDF 和 .docx Word 文档")
+        raise ApiError(415, "DOCUMENT_UNSUPPORTED", "目前支持 PDF、.docx 和 .doc Word 文档")
     if not text:
         raise ApiError(422, "DOCUMENT_NO_TEXT", "未提取到可选择的文字，扫描版 PDF 暂不支持 OCR")
     if len(text) > MAX_EXTRACTED_CHARS:

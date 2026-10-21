@@ -33,6 +33,7 @@ import ChatRobot from '../../components/ChatRobot.vue';
 import { appState, repository, reportError } from '../../core/repository.js';
 import { combineDue, dueParts, dueState, formatDue } from '../../core/dates.js';
 import { calendarSignature, addTaskToCalendar } from '../../core/calendar.js';
+import { requireAccountLogin } from '../../core/account.js';
 
 const filter = ref('all'), settingsOpen = ref(false), now = ref(Date.now()), pageActive = ref(false);
 const editing = ref(null), editError = ref(''), sourceNotice = ref(null), backupMode = ref(''), backupText = ref(''), backupError = ref('');
@@ -46,7 +47,7 @@ const filteredTasks = computed(() => appState.tasks.filter((task) => filter.valu
   return (a.due_at || a.due_date || '9999').localeCompare(b.due_at || b.due_date || '9999');
 }));
 let timer;
-onShow(() => { pageActive.value = true; now.value = Date.now(); clearInterval(timer); timer = setInterval(() => { now.value = Date.now(); }, 60000); });
+onShow(() => { if (!requireAccountLogin()) return; pageActive.value = true; now.value = Date.now(); clearInterval(timer); timer = setInterval(() => { now.value = Date.now(); }, 60000); });
 onHide(() => { pageActive.value = false; clearInterval(timer); });
 function originLabel(task) { return { ai: 'AI 解析后核对', example: '预置示例', manual: '手动整理' }[task.origin_mode] || '本地事项'; }
 function calendarAdded(task) { return Boolean(task.calendar_added_at); }

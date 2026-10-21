@@ -25,6 +25,7 @@ import Icon from './Icon.vue';
 import { appState } from '../core/repository.js';
 import { chatWithAI } from '../core/api.js';
 import { chatHistory } from '../core/chat-session.js';
+import { requireAccountLogin } from '../core/account.js';
 
 const WELCOME = { role: 'assistant', content: '嗨，我是小知。你可以问我怎么理解一条通知、安排办理步骤，也可以聊聊。涉及具体校规时，我会提醒你以学校原文为准。' };
 const history = reactive(chatHistory);
@@ -100,7 +101,7 @@ function toggle() {
   if (dragged) { dragged = false; return; }
   opened.value = !opened.value;
 }
-function goProfile() { opened.value = false; uni.navigateTo({ url: '/pages/profile/index' }); }
+function goProfile() { if (!requireAccountLogin()) return; opened.value = false; uni.navigateTo({ url: '/pages/profile/index' }); }
 function sendSuggested(text) { draft.value = text; send(); }
 async function send() {
   const content = draft.value.trim();

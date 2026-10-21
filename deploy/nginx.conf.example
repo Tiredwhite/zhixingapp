@@ -21,7 +21,7 @@ server {
     ssl_certificate_key /etc/letsencrypt/live/YOUR_DOMAIN/privkey.pem;
     ssl_protocols TLSv1.2 TLSv1.3;
     server_tokens off;
-    client_max_body_size 13m;
+    client_max_body_size 22m;
 
     # Optional Web preview; build with npm run build, then copy dist/build/h5 here.
     root /var/www/zhixing;

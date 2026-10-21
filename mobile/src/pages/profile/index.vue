@@ -47,6 +47,7 @@ import Icon from '../../components/Icon.vue';
 import ChatRobot from '../../components/ChatRobot.vue';
 import { appState } from '../../core/repository.js';
 import { logoutAccount } from '../../core/api.js';
+import { requireAccountLogin } from '../../core/account.js';
 import { APP_VERSION } from '../../core/release.js';
 
 const settingsOpen = ref(false), nicknameEditor = ref(false), nickname = ref('知行同学'), nicknameDraft = ref(''), account = ref(null), pageActive = ref(false);
@@ -54,7 +55,7 @@ const pendingCount = computed(() => appState.tasks.filter((task) => task.status 
 const completedCount = computed(() => appState.tasks.filter((task) => task.status === 'done').length);
 const calendarCount = computed(() => appState.tasks.filter((task) => task.calendar_added_at).length);
 const firstCharacter = computed(() => nickname.value.trim().charAt(0) || '知');
-onShow(() => { pageActive.value = true; nickname.value = uni.getStorageSync('zhixing.profile.nickname') || '知行同学'; account.value = uni.getStorageSync('zhixing.account.session') || null; });
+onShow(() => { if (!requireAccountLogin()) return; pageActive.value = true; nickname.value = uni.getStorageSync('zhixing.profile.nickname') || '知行同学'; account.value = uni.getStorageSync('zhixing.account.session') || null; });
 onHide(() => { pageActive.value = false; });
 function editProfile() { nicknameDraft.value = nickname.value; nicknameEditor.value = true; }
 function saveProfile() {
@@ -72,6 +73,7 @@ function logout() {
     try { await logoutAccount(appState.connection); } catch { /* Local logout still completes if the server is unavailable. */ }
     uni.removeStorageSync('zhixing.account.session'); account.value = null;
     uni.showToast({ title: '已退出登录', icon: 'success' });
+    uni.reLaunch({ url: '/pages/login/index' });
   } });
 }
 </script>

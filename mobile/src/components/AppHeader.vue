@@ -13,7 +13,8 @@
 </template>
 <script setup>
 import Icon from './Icon.vue';
+import { requireAccountLogin } from '../core/account.js';
 defineProps({ online: Boolean, back: Boolean, showDownload: Boolean });
 defineEmits(['settings', 'back', 'download']);
-function goHome() { uni.reLaunch({ url: '/pages/home/index' }); }
+function goHome() { if (requireAccountLogin()) uni.reLaunch({ url: '/pages/home/index' }); }
 </script>

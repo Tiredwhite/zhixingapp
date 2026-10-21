@@ -9,6 +9,7 @@
 </template>
 <script setup>
 import Icon from './Icon.vue';
+import { requireAccountLogin } from '../core/account.js';
 const props = defineProps({ active: String, count: Number });
-function navigate(page) { if (page !== props.active) uni.reLaunch({ url: `/pages/${page}/index` }); }
+function navigate(page) { if (page !== props.active && requireAccountLogin()) uni.reLaunch({ url: `/pages/${page}/index` }); }
 </script>

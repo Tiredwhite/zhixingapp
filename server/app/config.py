@@ -26,8 +26,6 @@ class Settings(BaseSettings):
 
     @model_validator(mode='after')
     def production_credentials(self):
-        if self.app_env == 'production' and len(self.demo_access_token.get_secret_value()) < 24:
-            raise ValueError('Production requires DEMO_ACCESS_TOKEN with at least 24 characters')
         if not self.model_api_base.startswith('https://'):
             if self.app_env == 'production':
                 raise ValueError('Production model API must use HTTPS')
