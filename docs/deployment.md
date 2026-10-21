@@ -133,3 +133,9 @@ systemd 为active，公网 `/healthz` 返回 `version=0.3.3`、`ai_configured=tr
 
 更新网站静态资源和安卓安装包；未修改后端。发布前网站备份：`/var/www/zhixing-backup-20261021-0.3.8`。新 APK 位于 `/var/www/zhixing/downloads/zhixing-0.3.8.apk`，公网完整下载与本机 SHA-256 一致。网站下载页显示 Android 0.3.8，`nginx -t` 通过且 Nginx active。H5入口通过原子替换 `index.html` 生效，缓存校验时使用 `?release=038`。
 
+## 0.3.8 AI 深读引用容错热修复（2026-10-21）
+
+后端热修复部署到独立目录 `/home/ubuntu/zhixing-20261021-v0.3.8/server`，通过 `/etc/systemd/system/zhixing.service.d/80-release-0.3.8.conf` 切换 systemd 工作目录。复用已有 Python 虚拟环境和 `127.0.0.1:8002` 监听；生产 `.env` 从现役配置复制并设为600权限，账号库与额度库路径保持不变。仅更新 `app/main.py` 和 `app/model.py`；网站静态资源、APK未改动，原0.3.7目录与systemd配置保留作回退。
+
+重启后 systemd 为active，本机及公网 `/healthz` 均返回 `version=0.3.8`、`ai_configured=true`、`model_id=deepseek-flash`。用户 iQOO 9 上对同一条2,984字通知连续完成3次实时 AI 深读，均通过字段及原文引用核验。模型密钥未输出、未写入仓库。
+
