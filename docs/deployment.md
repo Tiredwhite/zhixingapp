@@ -94,9 +94,11 @@ DCloud开发者中心的安卓云证书状态已确认为“证书已生成”�
 
 首次上线时静态资源因归档权限为600而被Nginx拒绝，已把 `/var/www/zhixing/assets` 与 `/var/www/zhixing/static` 内目录修正为755、文件修正为644，并通过公网确认JS/CSS返回200、下载页正常渲染。`scripts/package-deploy.py` 已改为在部署包中写入常规644文件权限，避免后续重建产生相同问题。新APK覆盖升级尚待机主在安卓手机验证；尤其需确认首次日历授权、Word/PDF导入与小知聊天行为。
 
-## 0.3.1 本机交付准备
+## 0.3.1 已部署（2026-10-21）
 
-HBuilderX 5.26 已输出并验签 0.3.1 安卓包，安装包信息和校验结果见 [0.3.1发布记录](release-0.3.1.md)。本机后端、网页和App资源已构建并通过测试；服务器仍运行0.3.0，0.3.1的服务端、静态网页及安装包尚待发布。
+新版后端位于 `/home/ubuntu/zhixing-20261021-v0.3.1`，由 systemd drop-in `/etc/systemd/system/zhixing.service.d/30-release-0.3.1.conf` 切换。服务复用现有Python虚拟环境并监听 `127.0.0.1:8002`；配额数据库路径沿用0.3.0，未重置原有额度数据。新目录 `.env` 从现役配置复制并按授权同步轮换后的应用连接令牌，保留原模型密钥与配额配置，权限为600。旧网页备份保存在 `/var/www/zhixing-backup-20261021-0.3.1`。
+
+新版网页资源先复制至 `/var/www/zhixing`，最后原子替换 `index.html`；已有下载目录及0.1.0、0.2.0、0.3.0安装包保留。0.3.1 APK发布为 `/var/www/zhixing/downloads/zhixing-0.3.1.apk`，SHA256为 `132e8234c140257ba53cebfc6405f2d84a05ef94e156c64241da212d3ae6aed1`。完整公网GET返回HTTP 200和20,459,557字节，哈希与本机签名包一致。Nginx语法检查通过，systemd服务为active，公网健康接口报告 `version=0.3.1`、`ai_configured=true`、`model_id=deepseek-flash`。真实聊天问答以及合成Word/PDF文档提取均经公网接口返回HTTP 200。详细包检查见 [0.3.1发布记录](release-0.3.1.md)。安卓覆盖安装后的日历、文档导入、聊天、旧数据保留和新连接令牌仍待用户在真机复核。
 
 ## 运行验证
 

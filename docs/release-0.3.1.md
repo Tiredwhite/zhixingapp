@@ -8,4 +8,4 @@
 - ARM64、ARMv7；minSdk 21、targetSdk 28；APK v2签名通过。签名证书SHA256与0.1.0和0.2.0相同：`55f2f8b502519f23f545d0a69ef87fc0638a6f3cc3bf2c439d3986095164d9e1`。
 - 权限仅包括网络访问、网络状态、读写日历及本应用的signature级广播保护权限。APK ZIP CRC有效；包中没有本机已知的模型密钥、应用连接令牌、签名密码或私钥文件，也没有嵌入签名字段。
 
-安装包由 HBuilderX 5.26 输出，并通过 `scripts/inspect-android.py` 验证；详细机器报告保存在忽略目录 `.local/evaluation/zhixing-0.3.1-apk-inspection.json`。本记录对应的APK尚未发布到公网，0.3.1覆盖升级后的日历授权、Word/PDF选择器和小知聊天仍待安卓真机验收。
+安装包由 HBuilderX 5.26 输出，并通过 `scripts/inspect-android.py` 验证；详细机器报告保存在忽略目录 `.local/evaluation/zhixing-0.3.1-apk-inspection.json`。2026-10-21 已发布到 `https://tiredwhite.cn/downloads/zhixing-0.3.1.apk`。公网完整下载返回 HTTP 200、20,459,557 字节，SHA256 与本机验签包一致。0.3.1覆盖升级后的日历授权、Word/PDF导入和小知聊天仍待安卓真机验收。
