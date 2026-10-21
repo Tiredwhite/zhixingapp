@@ -106,7 +106,11 @@ DCloud开发者中心的安卓云证书状态已确认为“证书已生成”�
 
 ## 0.3.3 部署（2026-10-21）
 
-0.3.3 本机修复和签名 APK 已完成验收，具体改动、构建方式、安装包哈希和检查结果见 [0.3.3发布记录](release-0.3.3.md)。服务器目前仍运行0.3.2：OrcaTerm 已断开 SSH，重连前未切换后端、网站或下载包，也未安装系统依赖。后续部署需要先备份并更新 Nginx 上传上限（现配置为16 KB）、安装 `antiword`，保留现有账号数据库和配额数据库，然后发布0.3.3后端、网站与 APK 并完成公网验收。
+0.3.3 后端位于 `/home/ubuntu/zhixing-20261021-v0.3.3`，由 `/etc/systemd/system/zhixing.service.d/50-release-0.3.3.conf` 切换，复用既有虚拟环境并监听 `127.0.0.1:8002`。生产 `.env` 从0.3.2复制，权限600；`AUTH_DB` 明确沿用 `/home/ubuntu/zhixing-20261021-v0.3.2/server/data/accounts.sqlite3`，`QUOTA_DB` 沿用 `/home/ubuntu/zhixing-20261020/server/data/quota.sqlite3`。部署前账号库为600权限、24,576字节，额度库为12,288字节；部署后两文件仍存在，新版本目录未生成空账号库。服务器安装 `antiword` 0.37-16，供旧版 `.doc` 提取文本。
+
+线上 Nginx 原上传限制只有16 KB，已先备份至 `/etc/nginx/sites-available/zhixing.backup-20261021-v0.3.3`，再调至22 MB并通过 `nginx -t`、reload。公网匿名发送17,408字节到文档提取路由到达认证层并返回401，不再被代理以413拒绝。新网站已切换到 `/var/www/zhixing`，旧站完整快照为 `/var/www/zhixing-backup-20261021-0.3.3`。
+
+systemd 为active，公网 `/healthz` 返回 `version=0.3.3`、`ai_configured=true`、`model_id=deepseek-flash`；未登录访问 `/api/v1/auth/me` 返回401。首页返回HTTP 200，线上首页SHA-256与发布文件一致。0.3.3 APK 位于 `/var/www/zhixing/downloads/zhixing-0.3.3.apk`；公网下载返回HTTP 200、`Content-Length: 20467948`，完整公网下载计算出的SHA-256与本机签名包一致：`b0dd75ffaa0357ba5ae384e97882390ccbde400ecdaefef40cca750fe161d86b`。地址：[知行0.3.3 APK](https://tiredwhite.cn/downloads/zhixing-0.3.3.apk)。既有安装包链接仍保留。检查详情见 [0.3.3发布记录](release-0.3.3.md)。手机覆盖安装和真实账号的PDF/DOC/DOCX导入、日历写入及登录流程仍待机主复核。
 
 ## 运行验证
 
