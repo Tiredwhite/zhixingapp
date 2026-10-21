@@ -39,18 +39,24 @@ function openSystemCalendarEditor(task, timing) {
   // not require the app to read or write the user's calendar database.
   const Intent = native.importClass('android.content.Intent');
   const Uri = native.importClass('android.net.Uri');
-  if (!Intent || !Uri) throw new Error('无法调用 Android 系统日历，请检查手机日历应用');
+  const Bundle = native.importClass('android.os.Bundle');
+  if (!Intent || !Uri || !Bundle) throw new Error('无法调用 Android 系统日历，请检查手机日历应用');
 
   const intent = new Intent('android.intent.action.INSERT');
   intent.setData(Uri.parse('content://com.android.calendar/events'));
-  intent.putExtra('title', task.title);
-  intent.putExtra('beginTime', timing.startTime);
-  intent.putExtra('endTime', timing.endTime);
-  intent.putExtra('allDay', false);
-  intent.putExtra('description', `知行校园通知助手 · ${timing.reminderMinutes ? '截止前30分钟提醒' : '当天09:00提醒'}`);
-  if (task.location) intent.putExtra('eventLocation', task.location);
-  intent.putExtra('hasAlarm', true);
-  intent.putExtra('minutes', timing.reminderMinutes);
+  // Use Bundle.putLong for the timestamps. Passing a JavaScript Number through
+  // overloaded Intent.putExtra can select the double overload; Calendar then
+  // misses its long-valued beginTime/endTime and defaults the event to now.
+  const extras = new Bundle();
+  extras.putString('title', task.title);
+  extras.putLong('beginTime', Math.trunc(timing.startTime));
+  extras.putLong('endTime', Math.trunc(timing.endTime));
+  extras.putBoolean('allDay', false);
+  extras.putString('description', `知行校园通知助手 · ${timing.reminderMinutes ? '截止前30分钟提醒' : '当天09:00提醒'}`);
+  if (task.location) extras.putString('eventLocation', task.location);
+  extras.putBoolean('hasAlarm', true);
+  extras.putInt('minutes', timing.reminderMinutes);
+  intent.putExtras(extras);
   native.runtimeMainActivity().startActivity(intent);
   return { method: 'system_calendar_insert', requiresSave: true };
 }
@@ -60,24 +66,26 @@ export function addTaskToCalendar(task, { success, fail }) {
   try { timing = calendarTiming(task); }
   catch (error) { fail(error); return; }
 
-  // Keep the native API where available. Classic uni-app runtimes that predate
-  // this API use Android's INSERT intent and let the user save in their calendar.
   if (typeof uni === 'undefined') {
     fail(new Error('请在知行 App 中使用手机日历功能'));
     return;
   }
-  if (typeof uni.addPhoneCalendar !== 'function') {
+  // On Android, the native API in the current HBuilderX shell silently ignores
+  // event timestamps on some Vivo devices. Use CalendarContract's INSERT form
+  // so its millisecond long extras are preserved and let the user save there.
+  if (typeof plus !== 'undefined' && plus.os?.name === 'Android') {
     try { success(openSystemCalendarEditor(task, timing)); }
-    catch (error) { fail(error); }
+    catch (error) { fail(new Error(calendarErrorMessage(error))); }
     return;
   }
-  const useSystemEditor = (nativeError) => {
-    try {
-      success(openSystemCalendarEditor(task, timing));
-    } catch (fallbackError) {
-      fail(new Error(calendarErrorMessage(nativeError || fallbackError)));
-    }
-  };
+
+  // Keep the native calendar API on non-Android platforms where it handles
+  // their calendar permissions and date types.
+  if (typeof uni.addPhoneCalendar !== 'function') {
+    fail(new Error('当前设备没有可用的日历功能'));
+    return;
+  }
+  const reportNativeFailure = (nativeError) => fail(new Error(calendarErrorMessage(nativeError)));
 
   try {
     uni.addPhoneCalendar({
@@ -89,11 +97,9 @@ export function addTaskToCalendar(task, { success, fail }) {
       alarm: true,
       alarmOffset: timing.reminderMinutes * 60,
       success: (result) => success(result),
-      // Old native shells may expose addPhoneCalendar but reject it at runtime.
-      // Fall back to Android's system editor, which needs no calendar write API.
-      fail: useSystemEditor,
+      fail: reportNativeFailure,
     });
   } catch (error) {
-    useSystemEditor(error);
+    reportNativeFailure(error);
   }
 }

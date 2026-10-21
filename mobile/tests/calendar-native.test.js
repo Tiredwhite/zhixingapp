@@ -2,112 +2,122 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { addTaskToCalendar } from '../src/core/calendar.js';
 
-test('Android calendar add delegates creation, permissions, and reminders to the native calendar API', () => {
+class BundleMock {
+  constructor() { this.extras = {}; this.types = {}; }
+  putString(key, value) { this.extras[key] = value; this.types[key] = 'string'; }
+  putLong(key, value) { this.extras[key] = value; this.types[key] = 'long'; }
+  putBoolean(key, value) { this.extras[key] = value; this.types[key] = 'boolean'; }
+  putInt(key, value) { this.extras[key] = value; this.types[key] = 'int'; }
+}
+
+class IntentMock {
+  constructor(action) { this.action = action; }
+  setData(uri) { this.uri = uri; return this; }
+  putExtras(extras) { this.bundle = extras; return this; }
+}
+
+function installAndroidMock() {
+  let opened;
+  globalThis.plus = {
+    os: { name: 'Android' },
+    android: {
+      importClass(name) {
+        if (name === 'android.content.Intent') return IntentMock;
+        if (name === 'android.net.Uri') return { parse: (value) => value };
+        if (name === 'android.os.Bundle') return BundleMock;
+        return null;
+      },
+      runtimeMainActivity() { return { startActivity(intent) { opened = intent; } }; },
+    },
+  };
+  return () => opened;
+}
+
+test('Android always opens the calendar editor with typed long deadline extras', () => {
+  const getOpened = installAndroidMock();
+  let nativeCalled = false, result, failure;
+  globalThis.uni = {
+    addPhoneCalendar() { nativeCalled = true; },
+  };
+  const task = { title: '提交项目书', due_at: '2026-10-23T18:00:00+08:00', location: '教学平台' };
+  addTaskToCalendar(task, {
+    success(value) { result = value; },
+    fail(error) { failure = error; },
+  });
+
+  const opened = getOpened();
+  assert.equal(failure, undefined);
+  assert.equal(result.method, 'system_calendar_insert');
+  assert.equal(result.requiresSave, true);
+  assert.equal(nativeCalled, false);
+  assert.equal(opened.action, 'android.intent.action.INSERT');
+  assert.equal(opened.uri, 'content://com.android.calendar/events');
+  assert.equal(opened.bundle.extras.title, task.title);
+  assert.equal(opened.bundle.extras.beginTime, Date.parse(task.due_at));
+  assert.equal(opened.bundle.extras.endTime, Date.parse(task.due_at) + 30 * 60 * 1000);
+  assert.equal(opened.bundle.types.beginTime, 'long');
+  assert.equal(opened.bundle.types.endTime, 'long');
+  assert.equal(opened.bundle.extras.eventLocation, '教学平台');
+  assert.equal(opened.bundle.extras.minutes, 30);
+});
+
+test('non-Android platforms keep the native calendar API and seconds timestamps', () => {
   let options, result, failure;
+  globalThis.plus = { os: { name: 'iOS' } };
   globalThis.uni = {
     addPhoneCalendar(value) {
       options = value;
       value.success({ errMsg: 'addPhoneCalendar:ok' });
     },
   };
-  globalThis.plus = { os: { name: 'Android' } };
-  addTaskToCalendar({ title: '提交项目书', due_at: '2026-10-23T18:00:00+08:00', location: '教学平台' }, {
+  const task = { title: '提交项目书', due_at: '2026-10-23T18:00:00+08:00' };
+  addTaskToCalendar(task, {
     success(value) { result = value; },
     fail(error) { failure = error; },
   });
   assert.equal(failure, undefined);
   assert.deepEqual(result, { errMsg: 'addPhoneCalendar:ok' });
-  assert.equal(options.title, '提交项目书');
-  assert.equal(options.startTime, Date.parse('2026-10-23T18:00:00+08:00') / 1000);
+  assert.equal(options.startTime, Date.parse(task.due_at) / 1000);
   assert.equal(options.endTime - options.startTime, 1800);
-  assert.equal(options.location, '教学平台');
   assert.equal(options.alarm, true);
   assert.equal(options.alarmOffset, 1800);
 });
 
-test('failed native calendar API falls back to the Android calendar editor', () => {
-  class IntentMock {
-    constructor(action) { this.action = action; this.extras = {}; }
-    setData(uri) { this.uri = uri; return this; }
-    putExtra(key, value) { this.extras[key] = value; return this; }
-  }
-  let opened, result, failure;
-  globalThis.uni = {
-    addPhoneCalendar(options) { options.fail({ errCode: 607, errMsg: 'calendar service unavailable' }); },
-  };
-  globalThis.plus = {
-    os: { name: 'Android' },
-    android: {
-      importClass(name) {
-        if (name === 'android.content.Intent') return IntentMock;
-        if (name === 'android.net.Uri') return { parse: (value) => value };
-        return null;
-      },
-      runtimeMainActivity() { return { startActivity(intent) { opened = intent; } }; },
-    },
-  };
-  addTaskToCalendar({ title: '提交项目书', due_date: '2026-10-23' }, {
-    success(value) { result = value; },
-    fail(error) { failure = error; },
+test('Android date-only deadlines are inserted at local 09:00', () => {
+  const getOpened = installAndroidMock();
+  globalThis.uni = {};
+  addTaskToCalendar({ title: '报名截止', due_date: '2026-10-23' }, {
+    success() {}, fail(error) { throw error; },
   });
-  assert.equal(failure, undefined);
-  assert.equal(result.requiresSave, true);
-  assert.equal(opened.action, 'android.intent.action.INSERT');
-  assert.equal(opened.extras.title, '提交项目书');
+  const timing = getOpened().bundle.extras;
+  const localStart = new Date(timing.beginTime);
+  assert.equal(localStart.getHours(), 9);
+  assert.equal(localStart.getMinutes(), 0);
+  assert.equal(timing.endTime - timing.beginTime, 30 * 60 * 1000);
+  assert.equal(timing.minutes, 0);
 });
 
-test('calendar failure keeps a useful error if Android editor cannot open', () => {
+test('Android calendar errors explain when the system editor cannot open', () => {
   let failure;
-  globalThis.uni = {
-    addPhoneCalendar(options) { options.fail({ errCode: 607, errMsg: 'calendar service unavailable' }); },
+  globalThis.uni = {};
+  globalThis.plus = {
+    os: { name: 'Android' },
+    android: { importClass() { return null; } },
   };
-  delete globalThis.plus;
   addTaskToCalendar({ title: '提交项目书', due_date: '2026-10-23' }, {
     success() {},
     fail(error) { failure = error; },
   });
-  assert.equal(failure.message, '手机系统日历服务不可用，请确认系统“日历”应用已启用后重试');
+  assert.match(failure.message, /无法调用 Android 系统日历/);
 });
 
-test('older Android runtimes open the system calendar editor with a prefilled event', () => {
-  class IntentMock {
-    constructor(action) { this.action = action; this.extras = {}; }
-    setData(uri) { this.uri = uri; return this; }
-    putExtra(key, value) { this.extras[key] = value; return this; }
-  }
-  let opened, result, failure;
-  globalThis.uni = {};
-  globalThis.plus = {
-    os: { name: 'Android' },
-    android: {
-      importClass(name) {
-        if (name === 'android.content.Intent') return IntentMock;
-        if (name === 'android.net.Uri') return { parse: (value) => value };
-        return null;
-      },
-      runtimeMainActivity() { return { startActivity(intent) { opened = intent; } }; },
-    },
-  };
-  addTaskToCalendar({ title: '提交项目书', due_date: '2026-10-23' }, {
-    success(value) { result = value; },
-    fail(error) { failure = error; },
-  });
-  assert.equal(failure, undefined);
-  assert.equal(result.requiresSave, true);
-  assert.equal(opened.action, 'android.intent.action.INSERT');
-  assert.equal(opened.uri, 'content://com.android.calendar/events');
-  assert.equal(opened.extras.title, '提交项目书');
-  assert.equal(opened.extras.beginTime, new Date(2026, 9, 23, 9).getTime());
-  assert.equal(opened.extras.allDay, false);
-});
-
-test('non-Android runtimes explain that a phone calendar app is required', () => {
-  globalThis.uni = {};
-  delete globalThis.plus;
+test('date-less tasks are rejected before opening any calendar API', () => {
   let failure;
-  addTaskToCalendar({ title: '提交项目书', due_date: '2026-10-23' }, {
+  globalThis.uni = { addPhoneCalendar() { throw new Error('must not be called'); } };
+  globalThis.plus = { os: { name: 'Android' } };
+  addTaskToCalendar({ title: '无日期任务' }, {
     success() {},
     fail(error) { failure = error; },
   });
-  assert.match(failure.message, /安卓知行 App/);
+  assert.match(failure.message, /待办日期无效/);
 });
