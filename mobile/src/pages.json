@@ -2,7 +2,9 @@
   "pages": [
     { "path": "pages/home/index", "style": { "navigationStyle": "custom" } },
     { "path": "pages/review/index", "style": { "navigationStyle": "custom" } },
-    { "path": "pages/tasks/index", "style": { "navigationStyle": "custom" } }
+    { "path": "pages/tasks/index", "style": { "navigationStyle": "custom" } },
+    { "path": "pages/profile/index", "style": { "navigationStyle": "custom" } },
+    { "path": "pages/download/index", "style": { "navigationStyle": "custom" } }
   ],
   "globalStyle": {
     "navigationBarTextStyle": "black",
