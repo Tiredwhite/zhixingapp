@@ -65,8 +65,33 @@ def test_deep_read_rejects_ungrounded_quotes_and_keeps_provider_text_private(set
         assert response.status_code == 502
         assert response.json()['code'] == 'INVALID_MODEL_OUTPUT'
         assert '盖章' not in response.text
-        assert len(calls) == 2
-        assert 'steps每项' in calls[1]['messages'][-1]['content']
+        assert len(calls) == 3
+        assert '逐字连续复制' in calls[1]['messages'][-1]['content']
+        assert '逐字连续复制' in calls[2]['messages'][-1]['content']
+
+
+def test_deep_read_repairs_malformed_json_and_bad_quote_before_returning(settings):
+    calls = []
+    wrong_quote = result_body()
+    wrong_quote['summary_quote'] = '通知没有的句子'
+    responses = iter([
+        httpx.Response(200, json={'choices': [{'message': {'content': '{"summary":'}, 'finish_reason': 'length'}]}),
+        provider_response(wrong_quote),
+        provider_response(result_body()),
+    ])
+
+    def provider(request):
+        calls.append(json.loads(request.content))
+        return next(responses)
+
+    with TestClient(create_app(settings, httpx.MockTransport(provider))) as client:
+        response = client.post('/api/v1/deep-read', json=request_body(), headers=AUTH)
+
+    assert response.status_code == 200
+    assert len(calls) == 3
+    assert 'JSON完整' in calls[1]['messages'][-1]['content']
+    assert '逐字连续复制' in calls[2]['messages'][-1]['content']
+    assert calls[2]['messages'][-2]['role'] == 'assistant'
 
 
 def test_deep_read_requires_token_and_strict_input_without_provider_call(settings):

@@ -67,7 +67,7 @@ def test_repeated_request_is_cached_and_conflicting_body_rejected(settings, payl
         assert conflict.status_code == 409
 
 
-def test_invalid_json_only_gets_one_repair(settings, payload):
+def test_invalid_json_gets_two_repair_attempts(settings, payload):
     calls = []
     def provider(request):
         calls.append(json.loads(request.content))
@@ -76,7 +76,8 @@ def test_invalid_json_only_gets_one_repair(settings, payload):
         response = client.post('/api/v1/parse', json=payload, headers=AUTH)
         assert response.status_code == 502
         assert response.json()['code'] == 'INVALID_MODEL_OUTPUT'
-        assert len(calls) == 2
+        assert len(calls) == 3
+        assert all('上一条输出无效' in call['messages'][-1]['content'] for call in calls[1:])
         assert calls[1]['messages'][-2] == {'role': 'assistant', 'content': '{not json'}
         assert 'items每项' in calls[1]['messages'][-1]['content']
         assert 'steps每项' not in calls[1]['messages'][-1]['content']
@@ -174,6 +175,6 @@ def test_network_error_is_bounded(settings, payload, monkeypatch):
         result = client.post('/api/v1/parse', json=payload, headers=AUTH)
         assert result.status_code == 504
         assert result.json()['code'] == 'MODEL_TIMEOUT'
-        assert len(calls) == 2
+        assert len(calls) == 3
         assert 'private' not in result.text
 

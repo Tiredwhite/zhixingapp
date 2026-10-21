@@ -83,7 +83,7 @@ class ModelClient:
         if self.settings.model_thinking_disabled:
             payload['thinking'] = {'type': 'disabled'}
         return await self._complete(payload, DeepReadResult, check_quotes,
-                                    repair_prompt='上一条输出无效。请只返回完整JSON对象；steps每项严格用instruction、why、source_quote，questions每项严格用question、reason；所有引用片段必须逐字出现在通知原文中。')
+                                    repair_prompt='上一条输出未通过校验。请重新核对通知原文，只返回完整JSON对象；字段严格为summary、summary_quote、steps、questions。steps每项严格用instruction、why、source_quote，questions每项严格用question、reason。summary_quote和source_quote必须从通知中逐字连续复制，不得改写、补标点或引用原文之外内容。内容尽量简洁，确保JSON完整；无法确认的追问可省略。')
 
     async def chat(self, request: ChatRequest):
         payload = {
@@ -102,10 +102,11 @@ class ModelClient:
     async def _complete(self, payload, result_type, validate=None, repair_prompt='上一条输出无效。请只返回符合规定结构的完整JSON对象。'):
         if not self.settings.model_api_key.get_secret_value():
             raise ApiError(503, 'MODEL_NOT_CONFIGURED', 'AI 尚未配置，可稍后重试')
-        deadline = time.monotonic() + 23
+        max_attempts = 3
+        deadline = time.monotonic() + 38
         last_error = None
         async with httpx.AsyncClient(transport=self.transport, follow_redirects=False) as client:
-            for attempt in range(2):
+            for attempt in range(max_attempts):
                 remaining = deadline - time.monotonic()
                 if remaining <= 0:
                     break
@@ -137,9 +138,10 @@ class ModelClient:
                     try:
                         envelope = response.json()
                         choice = envelope['choices'][0]
+                        message = choice.get('message')
+                        content = message.get('content') if isinstance(message, dict) else None
                         if choice.get('finish_reason') == 'length':
-                            raise InvalidModelOutput('输出被截断，请精简字段并返回完整JSON')
-                        content = choice['message']['content']
+                            raise InvalidModelOutput('输出被截断，请缩短说明并返回完整JSON')
                         if not isinstance(content, str) or not content.strip():
                             raise InvalidModelOutput('模型没有返回JSON内容')
                         result = result_type.model_validate_json(_json_object(content))
@@ -152,10 +154,10 @@ class ModelClient:
                     except ValidationError as exc:
                         last_error = ApiError(502, 'INVALID_MODEL_OUTPUT', 'AI 回复的字段或原文引用不符合校验，系统已自动尝试修复；仍失败时请重试或手动整理', True)
                         failure_hint = _validation_hint(exc)
-                    except (KeyError, IndexError, TypeError, ValueError):
+                    except (AttributeError, KeyError, IndexError, TypeError, ValueError):
                         last_error = ApiError(502, 'INVALID_MODEL_OUTPUT', 'AI 回复的字段或原文引用不符合校验，系统已自动尝试修复；仍失败时请重试或手动整理', True)
                         failure_hint = 'JSON不完整或结构不符合规定'
-                    if attempt == 0:
+                    if attempt < max_attempts - 1:
                         # A repair request without the previous assistant turn cannot repair it.
                         if isinstance(content, str) and content.strip():
                             payload['messages'].append({'role': 'assistant', 'content': content[:16000]})
@@ -168,8 +170,8 @@ class ModelClient:
                     last_error = ApiError(504, 'MODEL_TIMEOUT', 'AI 解析超时，原文已保留，可重试或手动整理', True)
                 except httpx.RequestError:
                     last_error = ApiError(502, 'MODEL_NETWORK', '暂时无法连接 AI 服务，可稍后重试或手动整理', True)
-                if attempt == 0 and deadline - time.monotonic() > 1:
-                    await asyncio.sleep(1)
+                if attempt < max_attempts - 1 and deadline - time.monotonic() > 1:
+                    await asyncio.sleep(0.5)
         raise last_error or ApiError(504, 'MODEL_TIMEOUT', 'AI 解析超时，可重试或手动整理', True)
 
 
