@@ -9,11 +9,12 @@
     <view v-else class="task-list">
       <view v-for="task in filteredTasks" :key="task.id" class="card task-card" :class="{ completed: task.status === 'done' }">
         <button class="task-check" :class="{ checked: task.status === 'done' }" :aria-label="`${task.status === 'done' ? '撤销完成' : '完成'} ${task.title}`" @click="toggle(task)"><Icon v-if="task.status === 'done'" name="check" :size="16" color="#fff" /></button>
-        <view class="task-content"><view class="task-topline"><text class="task-title">{{ task.title }}</text><text :class="['state-tag', taskStatus(task).className]">{{ taskStatus(task).label }}</text></view><view class="task-meta"><view class="meta-item"><Icon name="calendar" :size="13" color="#9da88f" /><text>{{ formatDue(task) }}</text></view><view v-if="task.location" class="meta-item"><Icon name="location" :size="13" color="#9da88f" /><text>{{ task.location }}</text></view></view><view v-if="task.materials?.length" class="task-materials"><text v-for="(material, index) in task.materials" :key="index">{{ material }}</text></view><view class="task-bottom"><text class="source-label">{{ originLabel(task) }} · 本机已保存</text><view class="task-actions"><button class="text-button" @click="viewSource(task)"><Icon name="link" :size="13" />来源</button><button class="text-button" @click="edit(task)"><Icon name="edit" :size="13" />编辑</button><button class="icon-button delete-button" :aria-label="`删除 ${task.title}`" @click="remove(task)"><Icon name="trash" :size="14" color="#b1b8a5" /></button></view></view></view>
+        <view class="task-content"><view class="task-topline"><text class="task-title">{{ task.title }}</text><text :class="['state-tag', taskStatus(task).className]">{{ taskStatus(task).label }}</text></view><view class="task-meta"><view class="meta-item"><Icon name="calendar" :size="13" color="#9da88f" /><text>{{ formatDue(task) }}</text></view><view v-if="task.location" class="meta-item"><Icon name="location" :size="13" color="#9da88f" /><text>{{ task.location }}</text></view></view><view v-if="task.materials?.length" class="task-materials"><text v-for="(material, index) in task.materials" :key="index">{{ material }}</text></view><view class="task-bottom"><text class="source-label">{{ originLabel(task) }} · 本机已保存</text><view class="task-actions"><button class="text-button" @click="viewSource(task)"><Icon name="link" :size="13" />来源</button><button class="text-button" @click="edit(task)"><Icon name="edit" :size="13" />编辑</button><button class="text-button calendar-action" :disabled="task.status === 'done' || calendarCurrent(task)" @click="addToCalendar(task)"><Icon name="calendar" :size="13" />{{ calendarLabel(task) }}</button><button class="icon-button delete-button" :aria-label="`删除 ${task.title}`" @click="remove(task)"><Icon name="trash" :size="14" color="#b1b8a5" /></button></view></view></view>
       </view>
     </view>
     <text class="list-note">临期状态在打开应用时更新，不提供后台推送。卸载或清理应用数据前，请先导出备份。</text>
     <AppNav active="tasks" :count="pendingCount" />
+    <ChatRobot />
     <ConnectionPanel :visible="settingsOpen" @close="settingsOpen = false" />
     <view v-if="editing" class="modal-overlay" @click.self="editing = null"><view class="modal-card"><view class="section-heading"><text class="modal-title">编辑待办</text><button class="icon-button" aria-label="关闭编辑" @click="editing = null"><Icon name="close" /></button></view><text class="field-label">事项名称</text><input v-model="editing.title" class="field-input" :maxlength="60" placeholder="填写事项名称" /><view class="edit-date-row"><view><text class="field-label">截止日期</text><input v-model="editing.date" class="field-input" placeholder="YYYY-MM-DD" :maxlength="10" /></view><view><text class="field-label">具体时刻</text><input v-model="editing.time" class="field-input" placeholder="HH:mm" :maxlength="5" /></view></view><text class="field-hint">日期与时刻均可留空。只有日期时，会标记为时刻待确认。</text><text class="field-label">地点或渠道</text><input v-model="editing.location" class="field-input" :maxlength="100" placeholder="可留空" /><text class="field-label">准备材料</text><input v-model="editing.materialText" class="field-input" :maxlength="500" placeholder="用顿号分隔" /><view v-if="editError" class="inline-message">{{ editError }}</view><button class="primary-button full" @click="saveEdit">保存修改</button></view></view>
     <view v-if="sourceNotice" class="modal-overlay" @click.self="sourceNotice = null"><view class="modal-card"><view class="section-heading"><text class="modal-title">通知来源</text><button class="icon-button" aria-label="关闭通知来源" @click="sourceNotice = null"><Icon name="close" /></button></view><text class="tag source-mode" :class="{ example: sourceNotice.mode === 'example' }">{{ { example: '预置示例', manual: '手动整理', ai: 'AI 解析后核对' }[sourceNotice.mode] }}</text><text class="notice-original">{{ sourceNotice.text }}</text><view v-if="sourceNotice.deep_read" class="saved-deep"><text class="section-title">AI 深读建议</text><text class="saved-summary">{{ sourceNotice.deep_read.summary }}</text><view v-for="(step, i) in sourceNotice.deep_read.steps" :key="i" class="saved-step"><text>{{ i + 1 }}. {{ step.instruction }}</text><text class="saved-quote">依据：“{{ step.source_quote }}”</text></view><text class="saved-boundary">以上为 AI 建议，请以原文为准。</text></view></view></view>
@@ -28,8 +29,10 @@ import AppHeader from '../../components/AppHeader.vue';
 import AppNav from '../../components/AppNav.vue';
 import ConnectionPanel from '../../components/ConnectionPanel.vue';
 import Icon from '../../components/Icon.vue';
+import ChatRobot from '../../components/ChatRobot.vue';
 import { appState, repository, reportError } from '../../core/repository.js';
 import { combineDue, dueParts, dueState, formatDue } from '../../core/dates.js';
+import { calendarSignature, addTaskToCalendar } from '../../core/calendar.js';
 
 const filter = ref('all'), settingsOpen = ref(false), now = ref(Date.now());
 const editing = ref(null), editError = ref(''), sourceNotice = ref(null), backupMode = ref(''), backupText = ref(''), backupError = ref('');
@@ -46,6 +49,32 @@ let timer;
 onShow(() => { now.value = Date.now(); clearInterval(timer); timer = setInterval(() => { now.value = Date.now(); }, 60000); });
 onHide(() => clearInterval(timer));
 function originLabel(task) { return { ai: 'AI 解析后核对', example: '预置示例', manual: '手动整理' }[task.origin_mode] || '本地事项'; }
+function calendarAdded(task) { return Boolean(task.calendar_added_at); }
+function calendarCurrent(task) { return calendarAdded(task) && task.calendar_entry_signature === calendarSignature(task); }
+function calendarLabel(task) {
+  if (task.calendar_added_at && task.calendar_entry_signature === calendarSignature(task)) return '已加日历';
+  return task.calendar_added_at ? '日历信息已变' : '添加为日程';
+}
+function addToCalendar(task) {
+  if (task.status === 'done') { uni.showToast({ title: '已完成事项不再添加日历', icon: 'none' }); return; }
+  if (!task.due_at && !task.due_date) { uni.showToast({ title: '请先编辑待办，补充截止日期和时刻', icon: 'none' }); return; }
+  const changed = task.calendar_added_at && task.calendar_entry_signature !== calendarSignature(task);
+  const add = () => addTaskToCalendar(task, {
+    success() {
+      try { repository.updateTask(task.id, { calendar_entry_signature: calendarSignature(task), calendar_added_at: new Date().toISOString() }); }
+      catch (error) { reportError(error); return; }
+      uni.showToast({ title: '日程已添加到手机日历', icon: 'success' });
+    },
+    fail(error) { uni.showToast({ title: error.message || '未能添加日程，请检查手机日历权限', icon: 'none', duration: 3000 }); },
+  });
+  const continueAdd = () => {
+    if (!uni.getStorageSync('zhixing.calendar.permissionExplained')) {
+      uni.showModal({ title: '添加手机日历提醒', content: '知行会在你同意后申请日历权限，用于自动创建日程和提醒；不会读取已有日程内容。', confirmText: '继续', success: (result) => { if (result.confirm) { uni.setStorageSync('zhixing.calendar.permissionExplained', true); add(); } } });
+    } else add();
+  };
+  if (changed) uni.showModal({ title: '待办信息已变化', content: '旧日程不会自动修改。确认重新添加后，请在手机日历中手动整理旧日程。', confirmText: '重新添加', success: (result) => { if (result.confirm) continueAdd(); } });
+  else continueAdd();
+}
 function goHome() { uni.reLaunch({ url: '/pages/home/index' }); }
 function toggle(task) { try { repository.updateTask(task.id, { status: task.status === 'done' ? 'pending' : 'done' }); } catch (e) { reportError(e); } }
 function viewSource(task) { sourceNotice.value = appState.notices.find((n) => n.id === task.notice_id); }
@@ -110,9 +139,11 @@ function restore() {
 .meta-item { display: flex; align-items: center; gap: 5px; font-size: 10px; color: #92a081; }
 .task-materials { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 12px; }
 .task-materials text { background: #f4f6ef; color: #9ba78d; padding: 4px 7px; border-radius: 4px; font-size: 9px; }
-.task-bottom { display: flex; align-items: center; justify-content: space-between; border-top: 1px solid #edf0e5; margin-top: 17px; padding-top: 10px; gap: 6px; }
-.task-actions { display: flex; align-items: center; gap: 12px; }
+.task-bottom { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; border-top: 1px solid #edf0e5; margin-top: 17px; padding-top: 10px; gap: 7px; }
+.task-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
 .task-actions .text-button { font-size: 10px; color: #9ca98e; gap: 4px; }
+.task-actions .calendar-action { color: #617b55; }
+.task-actions .calendar-action[disabled] { color: #8fa184; opacity: .9; }
 .delete-button { width: 23px; height: 23px; }
 .list-note { display: block; text-align: center; color: #a6b097; font-size: 10px; line-height: 1.9; padding: 25px 0; }
 .edit-date-row { display: grid; grid-template-columns: 1.2fr 1fr; gap: 12px; }

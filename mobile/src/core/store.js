@@ -20,13 +20,13 @@ function emptyState() {
 function validateState(data) {
   if (!data || data.schema_version !== 1 || !Number.isSafeInteger(data.revision) || data.revision < 0) throw new Error('不支持的数据版本');
   if (!Array.isArray(data.notices) || !Array.isArray(data.tasks) || data.notices.length > 100 || data.tasks.length > 200) throw new Error('数据格式或容量不正确');
-  if (!data.draft || typeof data.draft.text !== 'string' || typeof data.draft.id !== 'string' || data.draft.text.length > 2000) throw new Error('草稿格式不正确');
+  if (!data.draft || typeof data.draft.text !== 'string' || typeof data.draft.id !== 'string' || data.draft.text.length > 12000) throw new Error('草稿格式不正确');
   if (!data.connection || typeof data.connection.apiBase !== 'string' || typeof data.connection.token !== 'string') throw new Error('连接配置不正确');
   if (data.connection.apiBase.length > 200 || data.connection.token.length > 300) throw new Error('连接配置过长');
   if (typeof data.draft.source_time !== 'string' || data.draft.source_time.length > 40) throw new Error('发布时间格式不正确');
   if (data.workflow !== null) {
     const flow = data.workflow;
-    if (!flow || typeof flow.notice_id !== 'string' || typeof flow.text !== 'string' || flow.text.length > 2000 || !['ai', 'manual', 'example'].includes(flow.mode) || !Array.isArray(flow.items) || flow.items.length > 5) throw new Error('核对页数据格式不正确');
+    if (!flow || typeof flow.notice_id !== 'string' || typeof flow.text !== 'string' || flow.text.length > 12000 || !['ai', 'manual', 'example'].includes(flow.mode) || !Array.isArray(flow.items) || flow.items.length > 5) throw new Error('核对页数据格式不正确');
     for (const item of flow.items) {
       if (typeof item.id !== 'string' || typeof item.action !== 'string' || !Array.isArray(item.materials) || !Array.isArray(item.review_reasons)) throw new Error('候选事项格式不正确');
       if (item.due_at && typeof item.due_at !== 'string') throw new Error('候选时间格式不正确');
@@ -35,7 +35,7 @@ function validateState(data) {
   }
   const ids = new Set();
   for (const notice of data.notices) {
-    if (typeof notice.id !== 'string' || typeof notice.text !== 'string' || notice.text.length > 2000 || ids.has(notice.id)) throw new Error('通知格式不正确');
+    if (typeof notice.id !== 'string' || typeof notice.text !== 'string' || notice.text.length > 12000 || ids.has(notice.id)) throw new Error('通知格式不正确');
     if (notice.deep_read && (JSON.stringify(notice.deep_read).length > 8000 || !notice.text.includes(notice.deep_read.summary_quote) || !Array.isArray(notice.deep_read.steps) || notice.deep_read.steps.some((step) => !notice.text.includes(step.source_quote)))) throw new Error('AI深读来源不正确');
     ids.add(notice.id);
   }
@@ -46,6 +46,8 @@ function validateState(data) {
     if (task.due_date && !validDate(task.due_date)) throw new Error('待办日期不正确');
     if (!Array.isArray(task.materials) || task.materials.length > 10 || task.materials.some((m) => typeof m !== 'string' || m.length > 200)) throw new Error('材料格式不正确');
     if (task.location != null && (typeof task.location !== 'string' || task.location.length > 100)) throw new Error('地点格式不正确');
+    if (task.calendar_entry_signature != null && (typeof task.calendar_entry_signature !== 'string' || task.calendar_entry_signature.length > 220)) throw new Error('日历记录格式不正确');
+    if (task.calendar_added_at != null && !Number.isFinite(Date.parse(task.calendar_added_at))) throw new Error('日历记录时间不正确');
     taskIds.add(task.id);
   }
   return data;
@@ -144,7 +146,7 @@ export function createStore(adapter) {
     updateTask(id, changes) {
       const next = clone(state); const task = next.tasks.find((t) => t.id === id);
       if (!task) throw new Error('待办不存在，可能已被删除');
-      const allowed = ['title', 'due_date', 'due_at', 'status', 'location', 'materials'];
+      const allowed = ['title', 'due_date', 'due_at', 'status', 'location', 'materials', 'calendar_entry_signature', 'calendar_added_at'];
       for (const key of allowed) if (key in changes) task[key] = clone(changes[key]);
       task.updated_at = new Date().toISOString(); return commit(next);
     },
@@ -156,6 +158,7 @@ export function createStore(adapter) {
     exportBackup() {
       // Never export a connection token with task data.
       const data = clone(state); data.connection = { apiBase: '', token: '' }; data.workflow = null;
+      data.tasks = data.tasks.map(({ calendar_entry_signature, calendar_added_at, ...task }) => task);
       return JSON.stringify({ app: 'zhixing', version: 1, exported_at: new Date().toISOString(), data, checksum: checksum(JSON.stringify(data)) }, null, 2);
     },
     exportRaw() { return JSON.stringify(KEYS.map((key) => ({ key, value: adapter.get(key) })), null, 2); },
