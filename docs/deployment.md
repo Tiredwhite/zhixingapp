@@ -118,6 +118,10 @@ systemd 为active，公网 `/healthz` 返回 `version=0.3.3`、`ai_configured=tr
 
 服务重启后状态为active；本地与公网 `/healthz` 返回 `version=0.3.4`、`ai_configured=true`、`model_id=deepseek-flash`。服务器端直接调用生产 `extract_document` 函数处理合成扫描 PDF，OCR识别到预期英文文本并返回1页识别计数。Nginx配置及既有22 MB上传限制未改动。网站更新前备份到 `/var/www/zhixing-backup-20261021-0.3.4`，新静态资源复制到 `/var/www/zhixing`；公网首页摘要与本机发布一致。0.3.4 APK上传到 `/var/www/zhixing/downloads/zhixing-0.3.4.apk`，完整公网下载返回HTTP 200、24,432,932字节，SHA-256 与本机包相同。地址：[知行0.3.4 APK](https://tiredwhite.cn/downloads/zhixing-0.3.4.apk)。详见 [0.3.4发布记录](release-0.3.4.md)。真机覆盖安装、扫描 PDF 和 iQOO 9 系统日历写入仍待用户复核。
 
+## SPA 首页缓存策略修复（2026-10-21）
+
+针对手机浏览器继续使用旧下载页入口的情况，备份线上站点配置到 `/etc/nginx/sites-available/zhixing.backup-20261021-cache-policy`。`/` 与 `/index.html` 设置 `Cache-Control: no-cache, no-store, must-revalidate`、`Pragma: no-cache`，`/assets/` 哈希资源设置一年期 `immutable` 缓存。`nginx -t` 通过并重载成功；公网对 `/`、`/index.html` 的 HEAD 请求均返回HTTP 200及不缓存响应头，版本化 JS 返回HTTP 200、`public, max-age=31536000, immutable`，脚本仍报告0.3.4。
+
 ## 运行验证
 
 - 健康检查：不触发模型调用，不返回密钥。
