@@ -32,7 +32,7 @@
     </view>
     <view class="home-footnote"><text>从通知读懂要求，再决定下一步。</text><text>知行 · {{ APP_VERSION }}</text></view>
     <AppNav active="home" :count="pendingCount" />
-    <ChatRobot />
+    <ChatRobot v-if="pageActive" />
     <ConnectionPanel :visible="settingsOpen" @close="settingsOpen = false" @changed="setHealth" />
   </view>
 </template>
@@ -53,15 +53,15 @@ import { SAMPLES, manualCandidate } from '../../core/samples.js';
 import { APP_VERSION } from '../../core/release.js';
 
 const text = ref(appState.draft.text), published = ref(appState.draft.source_time || '');
-const busy = ref(false), fileBusy = ref(false), importedFile = ref(''), errorMessage = ref(''), failedId = ref(''), aiReady = ref(false), settingsOpen = ref(false);
+const busy = ref(false), fileBusy = ref(false), importedFile = ref(''), errorMessage = ref(''), failedId = ref(''), aiReady = ref(false), settingsOpen = ref(false), pageActive = ref(false);
 const today = new Date().toLocaleDateString('zh-CN', { month: 'long', day: 'numeric', weekday: 'long', timeZone: 'Asia/Shanghai' });
 const pendingCount = computed(() => appState.tasks.filter((t) => t.status !== 'done').length);
 const doneCount = computed(() => appState.tasks.filter((t) => t.status === 'done').length);
 const soonCount = computed(() => appState.tasks.filter((t) => dueState(t).className === 'soon').length);
 let debounce, activeRequest, requestVersion = 0;
 watch([text, published], () => { clearTimeout(debounce); debounce = setTimeout(() => { try { repository.saveDraft(text.value, published.value); } catch (e) { errorMessage.value = e.message; } }, 500); });
-onShow(async () => { try { setHealth(await health(repository.state.connection)); } catch { aiReady.value = false; } });
-onHide(() => { clearTimeout(debounce); if (text.value !== repository.state.draft.text || published.value !== repository.state.draft.source_time) { try { persistDraft(); } catch (error) { errorMessage.value = error.message; } } });
+onShow(async () => { pageActive.value = true; try { setHealth(await health(repository.state.connection)); } catch { aiReady.value = false; } });
+onHide(() => { pageActive.value = false; clearTimeout(debounce); if (text.value !== repository.state.draft.text || published.value !== repository.state.draft.source_time) { try { persistDraft(); } catch (error) { errorMessage.value = error.message; } } });
 onUnload(() => { clearTimeout(debounce); requestVersion++; activeRequest?.cancel(); });
 function setHealth(value) { aiReady.value = Boolean(value?.ai_configured); }
 function fillSample(sample) { text.value = sample.text; published.value = ''; errorMessage.value = ''; }

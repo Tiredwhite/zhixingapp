@@ -48,6 +48,7 @@ input, textarea { font: inherit; }
 .app-nav-wrap { position: fixed; z-index: 20; bottom: 22px; left: 0; right: 0; display: flex; justify-content: center; pointer-events: none; padding-bottom: env(safe-area-inset-bottom); }
 .app-nav { display: flex; align-items: center; background: #fffefa; border: 1px solid #e0e4d8; box-shadow: 0 6px 28px #173e3510; padding: 6px; border-radius: 18px; pointer-events: auto; gap: 6px; }
 .nav-item { display: flex; align-items: center; justify-content: center; gap: 9px; font-size: 13px; padding: 12px 25px; border-radius: 12px; color: #8a9487; }
+.nav-label { display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.15; }
 .nav-item.active { background: #eaf0df; color: #254c38; font-weight: 600; }
 .nav-count { font-size: 10px; color: #587149; background: #d9e3c8; border-radius: 5px; padding: 1px 5px; }
 .nav-separator { width: 1px; height: 18px; background: $line; }
@@ -74,8 +75,12 @@ input, textarea { font: inherit; }
   .settings-button { width: 28px; }
   .page-title { font-size: 27px; }
   .desktop-nav { display: none; }
-  .app-nav-wrap { bottom: 14px; }
-  .nav-item { padding: 11px 24px; }
+  .app-nav-wrap { bottom: 0; padding: 7px 12px calc(4px + env(safe-area-inset-bottom)); background: linear-gradient(180deg, #f5f5ef00, #f5f5efcc 24%); }
+  .app-nav { width: min(100%, 460px); justify-content: space-around; gap: 3px; padding: 4px; border-radius: 16px; }
+  .nav-item { position: relative; flex: 1; min-width: 0; min-height: 51px; flex-direction: column; gap: 2px; padding: 5px 3px; font-size: 10px; }
+  .nav-label { min-height: 22px; }
+  .nav-count { position: absolute; top: 2px; left: calc(50% + 8px); padding: 1px 4px; font-size: 8px; }
+  .nav-separator { height: 26px; }
   .modal-overlay { padding: 16px; }
   .modal-card { padding: 23px; max-height: 85vh; }
 }

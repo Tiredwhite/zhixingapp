@@ -82,6 +82,85 @@ test('AI assistant renders the reply returned by the chat API', async ({ page })
   await expect(page.locator('.chat-line.assistant').last()).toContainText('先核对通知中的截止时间');
 });
 
+test('AI chat history is shared across pages and remains after reopening the app', async ({ page }) => {
+  const requests = [];
+  await page.route('**/api/v1/chat', async (route) => {
+    const body = route.request().postDataJSON();
+    requests.push(body.messages);
+    await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({
+      mode: 'chat', model_id: 'deepseek-flash', request_id: `chat-${requests.length}`, reply: `小知回答 ${requests.length}`,
+    }) });
+  });
+  await page.goto('/');
+  await page.locator('.robot-launcher').click();
+  await page.locator('.chat-input textarea').fill('第一条问题');
+  await page.locator('.send-chat').click();
+  await expect(page.locator('.chat-line.assistant').last()).toContainText('小知回答 1');
+  await page.locator('.close-chat').click();
+  await page.locator('.tasks-nav-item').click();
+  await expect(page.locator('.page-title')).toHaveText('我的待办');
+  await page.locator('.robot-launcher').click();
+  await expect(page.locator('.chat-line.user')).toContainText('第一条问题');
+  await expect(page.locator('.chat-line.assistant').last()).toContainText('小知回答 1');
+  await page.locator('.chat-input textarea').fill('第二条问题');
+  await page.locator('.send-chat').click();
+  await expect(page.locator('.chat-line.assistant').last()).toContainText('小知回答 2');
+  expect(requests[1]).toEqual([
+    { role: 'user', content: '第一条问题' },
+    { role: 'assistant', content: '小知回答 1' },
+    { role: 'user', content: '第二条问题' },
+  ]);
+  await page.reload();
+  await page.locator('.robot-launcher').click();
+  await expect(page.locator('.chat-line.user')).toHaveCount(2);
+  await expect(page.locator('.chat-line.assistant').last()).toContainText('小知回答 2');
+});
+
+test('long AI replies scroll inside the assistant panel without scrolling the page', async ({ page }) => {
+  const reply = Array.from({ length: 70 }, (_, index) => `${index + 1}. 按通知核对材料、时间与提交渠道。`).join('\n');
+  await page.route('**/api/v1/chat', (route) => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({
+    mode: 'chat', model_id: 'deepseek-flash', request_id: 'long-chat-test', reply,
+  }) }));
+  await page.goto('/');
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.locator('.robot-launcher').click();
+  await page.locator('.chat-input textarea').fill('请详细说明');
+  await page.locator('.send-chat').click();
+  const messages = page.locator('.chat-messages');
+  await expect(page.locator('.chat-line.assistant').last()).toContainText('70. 按通知核对');
+  const scrollSurface = messages.locator('.uni-scroll-view').last();
+  await scrollSurface.hover();
+  await page.mouse.wheel(0, 800);
+  await expect.poll(() => scrollSurface.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+  expect(await page.evaluate(() => window.scrollY)).toBe(0);
+});
+
+test('assistant launcher can be repositioned on a narrow screen', async ({ page }) => {
+  await page.goto('/');
+  await page.setViewportSize({ width: 390, height: 844 });
+  const launcher = page.locator('.robot-launcher');
+  const before = await launcher.boundingBox();
+  await page.mouse.move(before.x + before.width / 2, before.y + before.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(before.x + before.width / 2 - 48, before.y + before.height / 2 - 42, { steps: 6 });
+  await page.mouse.up();
+  const after = await launcher.boundingBox();
+  expect(Math.abs(after.x - before.x) + Math.abs(after.y - before.y)).toBeGreaterThan(20);
+  await page.waitForTimeout(400);
+  await launcher.click();
+  await expect(page.locator('.chat-panel')).toBeVisible();
+});
+
+test('phone navigation stays at the bottom and presents the task label on two lines', async ({ page }) => {
+  await page.goto('/');
+  await page.setViewportSize({ width: 390, height: 844 });
+  const nav = page.locator('.app-nav-wrap');
+  const bounds = await nav.boundingBox();
+  expect(Math.abs(bounds.y + bounds.height - 844)).toBeLessThanOrEqual(1);
+  await expect(page.locator('.tasks-nav-item .nav-label')).toHaveText('我的待办');
+  await expect(page.locator('.app-nav .nav-item')).toHaveCount(3);
+});
+
 test('website download link opens the app introduction page', async ({ page }) => {
   await page.goto('/');
   await page.locator('.download-link').click();

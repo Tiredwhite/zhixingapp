@@ -14,7 +14,7 @@
     </view>
     <text class="list-note">临期状态在打开应用时更新，不提供后台推送。卸载或清理应用数据前，请先导出备份。</text>
     <AppNav active="tasks" :count="pendingCount" />
-    <ChatRobot />
+    <ChatRobot v-if="pageActive" />
     <ConnectionPanel :visible="settingsOpen" @close="settingsOpen = false" />
     <view v-if="editing" class="modal-overlay" @click.self="editing = null"><view class="modal-card"><view class="section-heading"><text class="modal-title">编辑待办</text><button class="icon-button" aria-label="关闭编辑" @click="editing = null"><Icon name="close" /></button></view><text class="field-label">事项名称</text><input v-model="editing.title" class="field-input" :maxlength="60" placeholder="填写事项名称" /><view class="edit-date-row"><view><text class="field-label">截止日期</text><input v-model="editing.date" class="field-input" placeholder="YYYY-MM-DD" :maxlength="10" /></view><view><text class="field-label">具体时刻</text><input v-model="editing.time" class="field-input" placeholder="HH:mm" :maxlength="5" /></view></view><text class="field-hint">日期与时刻均可留空。只有日期时，会标记为时刻待确认。</text><text class="field-label">地点或渠道</text><input v-model="editing.location" class="field-input" :maxlength="100" placeholder="可留空" /><text class="field-label">准备材料</text><input v-model="editing.materialText" class="field-input" :maxlength="500" placeholder="用顿号分隔" /><view v-if="editError" class="inline-message">{{ editError }}</view><button class="primary-button full" @click="saveEdit">保存修改</button></view></view>
     <view v-if="sourceNotice" class="modal-overlay" @click.self="sourceNotice = null"><view class="modal-card"><view class="section-heading"><text class="modal-title">通知来源</text><button class="icon-button" aria-label="关闭通知来源" @click="sourceNotice = null"><Icon name="close" /></button></view><text class="tag source-mode" :class="{ example: sourceNotice.mode === 'example' }">{{ { example: '预置示例', manual: '手动整理', ai: 'AI 解析后核对' }[sourceNotice.mode] }}</text><text class="notice-original">{{ sourceNotice.text }}</text><view v-if="sourceNotice.deep_read" class="saved-deep"><text class="section-title">AI 深读建议</text><text class="saved-summary">{{ sourceNotice.deep_read.summary }}</text><view v-for="(step, i) in sourceNotice.deep_read.steps" :key="i" class="saved-step"><text>{{ i + 1 }}. {{ step.instruction }}</text><text class="saved-quote">依据：“{{ step.source_quote }}”</text></view><text class="saved-boundary">以上为 AI 建议，请以原文为准。</text></view></view></view>
@@ -34,7 +34,7 @@ import { appState, repository, reportError } from '../../core/repository.js';
 import { combineDue, dueParts, dueState, formatDue } from '../../core/dates.js';
 import { calendarSignature, addTaskToCalendar } from '../../core/calendar.js';
 
-const filter = ref('all'), settingsOpen = ref(false), now = ref(Date.now());
+const filter = ref('all'), settingsOpen = ref(false), now = ref(Date.now()), pageActive = ref(false);
 const editing = ref(null), editError = ref(''), sourceNotice = ref(null), backupMode = ref(''), backupText = ref(''), backupError = ref('');
 const filters = [{ id: 'all', label: '全部' }, { id: 'pending', label: '待完成' }, { id: 'soon', label: '临期' }, { id: 'done', label: '已完成' }];
 const pendingCount = computed(() => appState.tasks.filter((t) => t.status !== 'done').length);
@@ -46,8 +46,8 @@ const filteredTasks = computed(() => appState.tasks.filter((task) => filter.valu
   return (a.due_at || a.due_date || '9999').localeCompare(b.due_at || b.due_date || '9999');
 }));
 let timer;
-onShow(() => { now.value = Date.now(); clearInterval(timer); timer = setInterval(() => { now.value = Date.now(); }, 60000); });
-onHide(() => clearInterval(timer));
+onShow(() => { pageActive.value = true; now.value = Date.now(); clearInterval(timer); timer = setInterval(() => { now.value = Date.now(); }, 60000); });
+onHide(() => { pageActive.value = false; clearInterval(timer); });
 function originLabel(task) { return { ai: 'AI 解析后核对', example: '预置示例', manual: '手动整理' }[task.origin_mode] || '本地事项'; }
 function calendarAdded(task) { return Boolean(task.calendar_added_at); }
 function calendarCurrent(task) { return calendarAdded(task) && task.calendar_entry_signature === calendarSignature(task); }
