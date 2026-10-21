@@ -9,13 +9,13 @@
 正式部署前需要服务器系统、域名与 HTTPS 条件，以及现有的 SSH 登录方式。不要将登录密码或私钥提交到仓库。
 
 1. 将代码部署到服务器，准备 Python 3.13 或 Docker Compose。
-2. 在服务器创建 `server/.env`，参考 `.env.example` 填写模型信息。设置 `APP_ENV=production`，并生成至少24字符的随机 `DEMO_ACCESS_TOKEN`。这个令牌只控制本项目访问，不是模型密钥。
+2. 在服务器创建 `server/.env`，参考 `.env.example` 填写模型信息并设置 `APP_ENV=production`。生产接口要求用户名/密码账号会话；`DEMO_ACCESS_TOKEN`只供本机开发测试，生产模式不接受它。
 3. 在仓库根运行 `docker compose -f deploy/compose.yaml up -d --build`。API只映射到服务器回环地址，外部不能直接访问8000端口。每日额度存储在独立数据卷中，重建容器不清空配额。
 4. 按服务器实际环境调整 `deploy/nginx.conf.example` 的域名、证书与静态目录，执行 Nginx 配置检查后启用。已有宝塔/1Panel/其他反代时，将 HTTPS `/api/` 与 `/healthz` 转发到 `127.0.0.1:8000` 即可。
 5. 可选 Web 预览：在 mobile 执行 `npm ci` 与 `npm run build`，将 `dist/build/h5` 上传到配置的静态目录。移动端的“连接设置”填写 API 所在 HTTPS 域名和临时访问令牌。
 6. 对外仅开放80/443和必要的管理端口。先验证健康接口，再用一条脱敏通知验证解析，最后检查配额、错误反馈和日志轮转。
 
-0.3.0增加 `/api/v1/documents/extract`，需在反向代理中允许最大13 MB的上传体。服务端限制单文件12 MB、PDF最多80页、提取文本最多12000字；仅接受PDF和`.docx`。文件上传后在本次请求期间临时读取，响应返回提取文本，不写入项目数据库或长期文件。当前只提取可选择文字的PDF，不执行扫描件OCR；只有用户在应用中点击“AI整理通知”后，提取文字才会再发送给模型服务。
+0.3.0首次加入 `/api/v1/documents/extract`。0.3.3将反向代理上限提高到22 MB、服务端单文件上限提高到20 MB；支持PDF、`.docx`和由`antiword`解析的旧版`.doc`，PDF最多80页、提取文本最多12000字。Docker镜像安装`antiword`；systemd主机也需安装该系统包。文件在本次请求期间临时读取，不写入项目数据库或长期文件。PDF只提取可选择文字，不执行扫描件OCR；只有用户点击“AI整理通知”后，提取文字才会发送给模型服务。
 
 0.3.1修复聊天界面未读取请求对象中 Promise 的问题；安卓通过系统文档选择器导入 Word/PDF，直接创建系统日历事件和提醒。网站保留 Android 下载入口，App 内的下载按钮与介绍页内容仅对 H5 编译。
 
@@ -103,6 +103,10 @@ DCloud开发者中心的安卓云证书状态已确认为“证书已生成”�
 ## 0.3.2 已部署（2026-10-21）
 
 新版服务位于 `/home/ubuntu/zhixing-20261021-v0.3.2`，由 systemd drop-in `/etc/systemd/system/zhixing.service.d/40-release-0.3.2.conf` 切换。服务复用现有 Python 虚拟环境，继续监听 `127.0.0.1:8002`。新 `.env` 继承现役私有配置并设为600权限；额度库继续使用 `/home/ubuntu/zhixing-20261020/server/data/quota.sqlite3`，账号库写入新版本 `server/data/accounts.sqlite3`。网站静态资源已更新并原子替换首页，旧版本安装包仍保留。0.3.2 APK发布到 `/var/www/zhixing/downloads/zhixing-0.3.2.apk`，大小20,463,852字节，服务器SHA256与本机签名包一致。公网下载地址返回HTTP 200和正确的Content-Length；公网首页及入口JS的SHA256与本地发布包一致。Nginx语法检查通过，systemd服务active，公网 `/healthz` 返回 `version=0.3.2`、`ai_configured=true`、`model_id=deepseek-flash`。未携带认证信息访问 `/api/v1/auth/me` 返回401，注册路由按预期拒绝GET方法（405）。安卓覆盖安装后的真机日历、文档选择器、账号注册登录和聊天交互仍需用户复核。发布记录见 [0.3.2发布记录](release-0.3.2.md)。
+
+## 0.3.3 部署（2026-10-21）
+
+（部署完成后补充服务器目录、服务切换、数据库沿用、Nginx上限、APK校验和公网验收结果。）
 
 ## 运行验证
 

@@ -2,8 +2,8 @@
   "name": "知行",
   "appid": "__UNI__435D6C0",
   "description": "校园通知解析与行动规划助手",
-  "versionName": "0.3.2",
-  "versionCode": "302",
+  "versionName": "0.3.3",
+  "versionCode": "303",
   "transformPx": false,
   "vueVersion": "3",
   "app-plus": {
