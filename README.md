@@ -22,7 +22,7 @@ HBuilderX 安装目录：`D:\code-app\HBuilderX.5.26.2026091802\HBuilderX`。在
 
 ## 开发状态
 
-0.1.0已完成真实AI解析、核对与本地待办闭环，并已在机主安卓手机完成安装、真实AI调用、离线编辑及重开保留数据的初步验收。0.2.0增加 [AI深读](docs/ai-deep-read.md)：在提取之后，真实模型给出有原文锚点的办理步骤、理由和待追问问题。新版后端及网页已发布到 [知行](https://tiredwhite.cn/)，并通过线上真实模型调用；[安卓0.2.0安装包](https://tiredwhite.cn/downloads/zhixing-0.2.0.apk)已验签并发布，手机覆盖更新仍待机主验证。版本详情见 [0.2.0交付记录](docs/release-0.2.0.md)，完整测试边界见 `docs/testing.md`。
+0.1.0已完成真实AI解析、核对与本地待办闭环，并已在机主安卓手机完成安装、真实AI调用、离线编辑及重开保留数据的初步验收。0.2.0增加 [AI深读](docs/ai-deep-read.md)：在提取之后，真实模型给出有原文锚点的办理步骤、理由和待追问问题。新版后端及网页已发布到 [知行](https://tiredwhite.cn/)，并通过线上真实模型调用；[安卓0.2.0安装包](https://tiredwhite.cn/downloads/zhixing-0.2.0.apk)已验签并发布，机主已反馈覆盖升级与AI深读均正常。版本详情见 [0.2.0交付记录](docs/release-0.2.0.md)，完整测试边界见 `docs/testing.md`。
 
 手机或新浏览器的“连接设置”需要填写服务器网址及应用连接令牌。部署者的连接信息单独保存在本机忽略目录 `.local/secrets/知行连接信息.txt`，不提交到仓库；不要将模型API密钥填写到前端。
 
