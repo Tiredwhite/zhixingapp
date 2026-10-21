@@ -25,7 +25,7 @@ def model_response(data=None):
 
 @pytest.fixture
 def settings(tmp_path):
-    return Settings(_env_file=None, model_api_key='test-key-not-live', demo_access_token='test-access', quota_db=str(tmp_path / 'quota.sqlite3'), per_minute_limit=100)
+    return Settings(_env_file=None, model_api_key='test-key-not-live', demo_access_token='test-access', quota_db=str(tmp_path / 'quota.sqlite3'), auth_db=str(tmp_path / 'accounts.sqlite3'), per_minute_limit=100)
 
 
 @pytest.fixture

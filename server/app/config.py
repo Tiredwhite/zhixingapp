@@ -22,6 +22,7 @@ class Settings(BaseSettings):
     per_minute_limit: int = Field(default=5, ge=1)
     max_concurrent_requests: int = Field(default=2, ge=1, le=8)
     quota_db: str = 'data/quota.sqlite3'
+    auth_db: str = 'data/accounts.sqlite3'
 
     @model_validator(mode='after')
     def production_credentials(self):

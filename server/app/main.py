@@ -10,12 +10,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
+from .auth import AccountStore, AuthRateLimiter
 from .config import SERVER_ROOT, Settings
 from .documents import MAX_DOCUMENT_BYTES, extract_document
 from .errors import ApiError
 from .model import ModelClient
 from .quota import Quota, identity_hash
-from .schemas import ChatRequest, ChatResponse, DeepReadRequest, DeepReadResponse, ParseRequest, ParseResponse
+from .schemas import AccountCredentials, AccountLoginResponse, AccountRegistrationResponse, ChatRequest, ChatResponse, DeepReadRequest, DeepReadResponse, ParseRequest, ParseResponse
 from .service import ParseService
 
 logger = logging.getLogger('zhixing')
@@ -37,7 +38,13 @@ def create_app(settings: Settings | None = None, model_transport=None) -> FastAP
     if not quota_path.is_absolute():
         quota_path = SERVER_ROOT / quota_path
     quota = Quota(str(quota_path), settings.daily_attempt_limit, settings.per_minute_limit)
+    auth_path = Path(settings.auth_db)
+    if not auth_path.is_absolute():
+        auth_path = SERVER_ROOT / auth_path
+    accounts = AccountStore(str(auth_path))
+    auth_limiter = AuthRateLimiter()
     service = ParseService(settings, ModelClient(settings, quota, transport=model_transport), quota)
+    app.state.accounts = accounts
     app.state.service = service
     app.add_middleware(
         CORSMiddleware,
@@ -81,12 +88,50 @@ def create_app(settings: Settings | None = None, model_transport=None) -> FastAP
         authorization = request.headers.get('Authorization', '')
         given = authorization[7:] if authorization.startswith('Bearer ') else ''
         client_ip = request.client.host if request.client else 'unknown'
+        if expected and hmac.compare_digest(expected.encode(), given.encode()):
+            return identity_hash(expected), client_ip
+        username = accounts.authenticate(given)
+        if username:
+            return identity_hash(f'account:{username}'), client_ip
         if expected:
-            if not hmac.compare_digest(expected.encode(), given.encode()):
-                raise ApiError(401, 'INVALID_TOKEN', '连接令牌无效，请检查连接设置')
-        elif settings.app_env == 'production' or client_ip not in ('127.0.0.1', '::1', 'testclient'):
+            raise ApiError(401, 'INVALID_TOKEN', '账号登录已失效，请重新登录')
+        if settings.app_env == 'production' or client_ip not in ('127.0.0.1', '::1', 'testclient'):
             raise ApiError(401, 'TOKEN_REQUIRED', '远程访问需要配置连接令牌')
         return identity_hash(expected or 'local-development'), client_ip
+
+    @app.post('/api/v1/auth/register', response_model=AccountRegistrationResponse, status_code=201)
+    def register_account(payload: AccountCredentials, request: Request):
+        client_ip = request.client.host if request.client else 'unknown'
+        auth_limiter.check(client_ip)
+        accounts.register(payload.username, payload.password)
+        return AccountRegistrationResponse(username=payload.username,
+                                           message='注册成功，请返回知行 App 登录')
+
+    @app.post('/api/v1/auth/login', response_model=AccountLoginResponse)
+    def login_account(payload: AccountCredentials, request: Request):
+        client_ip = request.client.host if request.client else 'unknown'
+        auth_limiter.check(client_ip)
+        token, expires_at = accounts.login(payload.username, payload.password)
+        return AccountLoginResponse(username=payload.username, access_token=token, expires_at=expires_at)
+
+    @app.get('/api/v1/auth/me')
+    def current_account(request: Request):
+        authorization = request.headers.get('Authorization', '')
+        given = authorization[7:] if authorization.startswith('Bearer ') else ''
+        username = accounts.authenticate(given)
+        if not username:
+            raise ApiError(401, 'LOGIN_REQUIRED', '请先登录账号')
+        return {'username': username}
+
+    @app.post('/api/v1/auth/logout')
+    def logout_account(request: Request):
+        authorization = request.headers.get('Authorization', '')
+        given = authorization[7:] if authorization.startswith('Bearer ') else ''
+        username = accounts.authenticate(given)
+        if not username:
+            raise ApiError(401, 'LOGIN_REQUIRED', '登录状态已失效')
+        accounts.revoke(given)
+        return {'ok': True}
 
     @app.post('/api/v1/parse', response_model=ParseResponse)
     async def parse_notice(payload: ParseRequest, request: Request):

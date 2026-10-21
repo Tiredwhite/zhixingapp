@@ -1,4 +1,5 @@
 from datetime import datetime
+import re
 from typing import Literal
 from uuid import UUID
 
@@ -7,6 +8,31 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 
 class StrictModel(BaseModel):
     model_config = ConfigDict(extra='forbid', str_strip_whitespace=True)
+
+
+class AccountCredentials(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    username: str = Field(min_length=3, max_length=24)
+    password: str = Field(min_length=8, max_length=128)
+
+    @field_validator('username')
+    @classmethod
+    def simple_username(cls, value):
+        if not re.fullmatch(r'[A-Za-z0-9_]{3,24}', value):
+            raise ValueError('账号须为3—24位字母、数字或下划线')
+        return value.lower()
+
+
+class AccountRegistrationResponse(BaseModel):
+    username: str
+    message: str
+
+
+class AccountLoginResponse(BaseModel):
+    username: str
+    access_token: str
+    token_type: str = 'Bearer'
+    expires_at: int
 
 
 class ParseRequest(StrictModel):

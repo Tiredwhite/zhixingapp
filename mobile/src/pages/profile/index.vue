@@ -6,7 +6,7 @@
     </view>
     <view class="profile-hero">
       <view class="avatar">{{ firstCharacter }}</view>
-      <view class="identity"><text class="nickname">{{ nickname }}</text><text class="identity-note">本机使用 · 无需手机号或身份信息</text></view>
+      <view class="identity"><text class="nickname">{{ nickname }}</text><text class="identity-note">{{ account?.username ? `已登录账号 · ${account.username}` : '本机使用 · 无需手机号或身份信息' }}</text></view>
       <button class="edit-profile" @click="editProfile"><Icon name="edit" :size="15" />编辑昵称</button>
       <view class="profile-mark"><Icon name="spark" :size="22" color="#c5d2ad" /></view>
     </view>
@@ -22,6 +22,7 @@
         <button class="profile-row" @click="goTasks"><view class="row-icon"><Icon name="tasks" :size="18" /></view><view class="row-copy"><text class="row-title">管理我的待办</text><text class="row-subtitle">编辑、完成、备份和恢复本地任务</text></view><Icon name="arrow" :size="17" color="#9ba58f" /></button>
         <button class="profile-row" @click="goHome"><view class="row-icon amber"><Icon name="paper" :size="18" color="#a88149" /></view><view class="row-copy"><text class="row-title">整理新通知</text><text class="row-subtitle">粘贴内容，或导入 Word / PDF</text></view><Icon name="arrow" :size="17" color="#9ba58f" /></button>
         <button class="profile-row" @click="settingsOpen = true"><view class="row-icon blue"><Icon name="settings" :size="18" color="#73869a" /></view><view class="row-copy"><text class="row-title">AI 服务连接</text><text class="row-subtitle">{{ appState.connection.apiBase || '尚未配置服务地址' }}</text></view><Icon name="arrow" :size="17" color="#9ba58f" /></button>
+        <button class="profile-row" @click="account ? logout() : openLogin()"><view class="row-icon green"><Icon name="user" :size="18" color="#66805c" /></view><view class="row-copy"><text class="row-title">{{ account ? '退出账号' : '账号与登录' }}</text><text class="row-subtitle">{{ account ? account.username : '用户名和密码登录，不收集个人身份信息' }}</text></view><Icon name="arrow" :size="17" color="#9ba58f" /></button>
       </view>
       <view class="profile-side">
         <view class="profile-about"><text class="eyebrow">DESIGNED FOR CAMPUS LIFE</text><text class="about-title">从看懂，到行动。</text><text class="about-copy">知行用 AI 帮你理解通知、梳理办理步骤，再由你核对原文并保存。待办默认只存在当前手机，断网也能查看和编辑。</text><view class="about-tags"><text>AI 深读</text><text>来源可核</text><text>离线待办</text></view></view>
@@ -30,7 +31,7 @@
     </view>
     <view class="profile-footer"><text>知行 · 校园通知助手</text><text>Android {{ APP_VERSION }}</text></view>
     <AppNav active="profile" :count="pendingCount" />
-    <ChatRobot />
+    <ChatRobot v-if="pageActive" />
     <ConnectionPanel :visible="settingsOpen" @close="settingsOpen = false" />
     <view v-if="nicknameEditor" class="modal-overlay" @click.self="nicknameEditor = false"><view class="modal-card"><view class="section-heading"><text class="modal-title">设置昵称</text><button class="icon-button" aria-label="关闭编辑" @click="nicknameEditor = false"><Icon name="close" /></button></view><text class="field-hint nickname-hint">昵称只保存在这台设备，不会用于登录。</text><input v-model="nicknameDraft" class="field-input nickname-input" maxlength="16" placeholder="例如：知行同学" /><button class="primary-button full" @click="saveProfile">保存昵称</button></view></view>
   </view>
@@ -38,21 +39,23 @@
 
 <script setup>
 import { computed, ref } from 'vue';
-import { onShow } from '@dcloudio/uni-app';
+import { onShow, onHide } from '@dcloudio/uni-app';
 import AppHeader from '../../components/AppHeader.vue';
 import AppNav from '../../components/AppNav.vue';
 import ConnectionPanel from '../../components/ConnectionPanel.vue';
 import Icon from '../../components/Icon.vue';
 import ChatRobot from '../../components/ChatRobot.vue';
 import { appState } from '../../core/repository.js';
+import { logoutAccount } from '../../core/api.js';
 import { APP_VERSION } from '../../core/release.js';
 
-const settingsOpen = ref(false), nicknameEditor = ref(false), nickname = ref('知行同学'), nicknameDraft = ref('');
+const settingsOpen = ref(false), nicknameEditor = ref(false), nickname = ref('知行同学'), nicknameDraft = ref(''), account = ref(null), pageActive = ref(false);
 const pendingCount = computed(() => appState.tasks.filter((task) => task.status === 'pending').length);
 const completedCount = computed(() => appState.tasks.filter((task) => task.status === 'done').length);
 const calendarCount = computed(() => appState.tasks.filter((task) => task.calendar_added_at).length);
 const firstCharacter = computed(() => nickname.value.trim().charAt(0) || '知');
-onShow(() => { nickname.value = uni.getStorageSync('zhixing.profile.nickname') || '知行同学'; });
+onShow(() => { pageActive.value = true; nickname.value = uni.getStorageSync('zhixing.profile.nickname') || '知行同学'; account.value = uni.getStorageSync('zhixing.account.session') || null; });
+onHide(() => { pageActive.value = false; });
 function editProfile() { nicknameDraft.value = nickname.value; nicknameEditor.value = true; }
 function saveProfile() {
   const next = nicknameDraft.value.trim();
@@ -62,6 +65,15 @@ function saveProfile() {
 }
 function goTasks() { uni.reLaunch({ url: '/pages/tasks/index' }); }
 function goHome() { uni.reLaunch({ url: '/pages/home/index' }); }
+function openLogin() { uni.navigateTo({ url: '/pages/login/index' }); }
+function logout() {
+  uni.showModal({ title: '退出知行账号？', content: '本机待办与昵称会保留；退出后重新使用账号服务时需要再次登录。', confirmText: '退出登录', success: async (result) => {
+    if (!result.confirm) return;
+    try { await logoutAccount(appState.connection); } catch { /* Local logout still completes if the server is unavailable. */ }
+    uni.removeStorageSync('zhixing.account.session'); account.value = null;
+    uni.showToast({ title: '已退出登录', icon: 'success' });
+  } });
+}
 </script>
 
 <style scoped lang="scss">

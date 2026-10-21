@@ -17,9 +17,14 @@ export function request(connection, path, { method = 'GET', data, timeout = 2500
     rejectPending = reject;
     let url;
     try { url = baseURL(connection) + path; } catch (error) { reject(error); return; }
+    let sessionToken = '';
+    try {
+      const session = typeof uni !== 'undefined' && uni.getStorageSync('zhixing.account.session');
+      if (session && typeof session.access_token === 'string') sessionToken = session.access_token;
+    } catch { /* A missing account session falls back to the configured connection token. */ }
     task = uni.request({
       url, method, data, timeout,
-      header: { 'Content-Type': 'application/json', ...(connection.token ? { Authorization: `Bearer ${connection.token}` } : {}) },
+      header: { 'Content-Type': 'application/json', ...((sessionToken || connection.token) ? { Authorization: `Bearer ${sessionToken || connection.token}` } : {}) },
       success(response) {
         if (cancelled) return;
         if (response.statusCode >= 200 && response.statusCode < 300) resolve(response.data);
@@ -89,5 +94,17 @@ export function extractDocument(connection, filePath, filename = '') {
 
 export const chatWithAI = (connection, messages) => request(connection, '/api/v1/chat', {
   method: 'POST', data: { messages }, timeout: 30000,
+}).promise;
+
+export const registerAccount = (connection, username, password) => request(connection, '/api/v1/auth/register', {
+  method: 'POST', data: { username, password }, timeout: 15000,
+}).promise;
+
+export const loginAccount = (connection, username, password) => request(connection, '/api/v1/auth/login', {
+  method: 'POST', data: { username, password }, timeout: 15000,
+}).promise;
+
+export const logoutAccount = (connection) => request(connection, '/api/v1/auth/logout', {
+  method: 'POST', data: {}, timeout: 8000,
 }).promise;
 
