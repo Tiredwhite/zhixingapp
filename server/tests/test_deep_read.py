@@ -51,6 +51,31 @@ def test_deep_read_is_real_model_output_with_grounded_quotes_and_cache(settings)
         assert client.post('/api/v1/deep-read', json={**payload, 'text': '另一条通知'}, headers=AUTH).status_code == 409
 
 
+def test_deep_read_recovers_exact_source_quote_when_model_changes_only_spacing_and_punctuation(settings):
+    text = '通知：请在2026 年 11 月 9 日上午 10:00 前提交论文；地点：教室 A-201。'
+    data = result_body()
+    data['summary_quote'] = '2026年11月9日上午10:00前'
+    data['steps'][0]['source_quote'] = '教室A201'
+    data['steps'][1]['source_quote'] = '提交论文'
+    calls = []
+
+    def provider(request):
+        calls.append(request)
+        return provider_response(data)
+
+    with TestClient(create_app(settings, httpx.MockTransport(provider))) as client:
+        response = client.post('/api/v1/deep-read', json={
+            **request_body(), 'text': text,
+        }, headers=AUTH)
+
+    assert response.status_code == 200
+    assert response.json()['summary_quote'] == '2026 年 11 月 9 日上午 10:00 前'
+    assert response.json()['steps'][0]['source_quote'] == '教室 A-201'
+    assert response.json()['summary_quote'] in text
+    assert response.json()['steps'][0]['source_quote'] in text
+    assert len(calls) == 1
+
+
 def test_deep_read_rejects_ungrounded_quotes_and_keeps_provider_text_private(settings):
     calls = []
     wrong = result_body()
