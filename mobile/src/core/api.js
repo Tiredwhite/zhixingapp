@@ -63,7 +63,7 @@ export const parseNotice = (connection, text, source_time) => request(connection
 });
 
 export const deepReadNotice = (connection, text, actions) => request(connection, '/api/v1/deep-read', {
-  method: 'POST', data: { request_id: uid(), text, actions },
+  method: 'POST', data: { request_id: uid(), text, actions }, timeout: 45000,
 });
 
 function decodeDocumentResponse(response) {

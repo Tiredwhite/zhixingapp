@@ -47,7 +47,14 @@ const filteredTasks = computed(() => appState.tasks.filter((task) => filter.valu
   return (a.due_at || a.due_date || '9999').localeCompare(b.due_at || b.due_date || '9999');
 }));
 let timer;
-onShow(() => { if (!requireAccountLogin()) return; pageActive.value = true; now.value = Date.now(); clearInterval(timer); timer = setInterval(() => { now.value = Date.now(); }, 60000); });
+onShow(() => {
+  if (!requireAccountLogin()) return;
+  pageActive.value = true;
+  now.value = Date.now();
+  clearInterval(timer);
+  timer = setInterval(() => { now.value = Date.now(); }, 60000);
+  confirmCalendarSaveOnReturn();
+});
 onHide(() => { pageActive.value = false; clearInterval(timer); });
 function originLabel(task) { return { ai: 'AI 解析后核对', example: '预置示例', manual: '手动整理' }[task.origin_mode] || '本地事项'; }
 function calendarAdded(task) { return Boolean(task.calendar_added_at); }
@@ -56,12 +63,39 @@ function calendarLabel(task) {
   if (task.calendar_added_at && task.calendar_entry_signature === calendarSignature(task)) return '已加日历';
   return task.calendar_added_at ? '日历信息已变' : '添加为日程';
 }
+function confirmCalendarSaveOnReturn() {
+  let pending;
+  try {
+    pending = uni.getStorageSync('zhixing.calendar.pendingSave');
+    if (pending) uni.removeStorageSync('zhixing.calendar.pendingSave');
+  } catch { return; }
+  if (!pending?.taskId) return;
+  const task = appState.tasks.find((item) => item.id === pending.taskId);
+  if (!task || calendarSignature(task) !== pending.signature) return;
+  uni.showModal({
+    title: '确认日程已保存',
+    content: '系统日历已打开。若你刚才点了“保存”，可确认标记；如果取消或未保存，请点“暂不标记”。',
+    confirmText: '已保存',
+    cancelText: '暂不标记',
+    success(result) {
+      if (!result.confirm) return;
+      try { repository.updateTask(task.id, { calendar_entry_signature: pending.signature, calendar_added_at: new Date().toISOString() }); }
+      catch (error) { reportError(error); }
+    },
+  });
+}
 function addToCalendar(task) {
   if (task.status === 'done') { uni.showToast({ title: '已完成事项不再添加日历', icon: 'none' }); return; }
   if (!task.due_at && !task.due_date) { uni.showToast({ title: '请先编辑待办，补充截止日期和时刻', icon: 'none' }); return; }
   const changed = task.calendar_added_at && task.calendar_entry_signature !== calendarSignature(task);
   const add = () => addTaskToCalendar(task, {
-    success() {
+    success(result) {
+      if (result?.requiresSave) {
+        try { uni.setStorageSync('zhixing.calendar.pendingSave', { taskId: task.id, signature: calendarSignature(task) }); }
+        catch (error) { reportError(error); return; }
+        uni.showToast({ title: '请在系统日历页面点保存', icon: 'none', duration: 3500 });
+        return;
+      }
       try { repository.updateTask(task.id, { calendar_entry_signature: calendarSignature(task), calendar_added_at: new Date().toISOString() }); }
       catch (error) { reportError(error); return; }
       uni.showToast({ title: '日程已添加到手机日历', icon: 'success' });
@@ -69,8 +103,8 @@ function addToCalendar(task) {
     fail(error) { uni.showToast({ title: error.message || '未能添加日程，请检查手机日历权限', icon: 'none', duration: 3000 }); },
   });
   const continueAdd = () => {
-    if (!uni.getStorageSync('zhixing.calendar.permissionExplained')) {
-      uni.showModal({ title: '添加手机日历提醒', content: '知行会在你同意后申请日历权限，用于自动创建日程和提醒；不会读取已有日程内容。', confirmText: '继续', success: (result) => { if (result.confirm) { uni.setStorageSync('zhixing.calendar.permissionExplained', true); add(); } } });
+    if (!uni.getStorageSync('zhixing.calendar.addExplained')) {
+      uni.showModal({ title: '添加手机日历提醒', content: '知行会打开系统日历并预填事项信息。请在系统日历页面确认保存；知行不会读取已有日程。', confirmText: '继续', success: (result) => { if (result.confirm) { uni.setStorageSync('zhixing.calendar.addExplained', true); add(); } } });
     } else add();
   };
   if (changed) uni.showModal({ title: '待办信息已变化', content: '旧日程不会自动修改。确认重新添加后，请在手机日历中手动整理旧日程。', confirmText: '重新添加', success: (result) => { if (result.confirm) continueAdd(); } });

@@ -37,12 +37,45 @@ test('calendar API failures explain that the system calendar service is unavaila
   assert.equal(failure.message, '手机系统日历服务不可用，请确认系统“日历”应用已启用后重试');
 });
 
-test('an older runtime reports that it needs an updated calendar capability', () => {
-  delete globalThis.uni;
+test('older Android runtimes open the system calendar editor with a prefilled event', () => {
+  class IntentMock {
+    constructor(action) { this.action = action; this.extras = {}; }
+    setData(uri) { this.uri = uri; return this; }
+    putExtra(key, value) { this.extras[key] = value; return this; }
+  }
+  let opened, result, failure;
+  globalThis.uni = {};
+  globalThis.plus = {
+    os: { name: 'Android' },
+    android: {
+      importClass(name) {
+        if (name === 'android.content.Intent') return IntentMock;
+        if (name === 'android.net.Uri') return { parse: (value) => value };
+        return null;
+      },
+      runtimeMainActivity() { return { startActivity(intent) { opened = intent; } }; },
+    },
+  };
+  addTaskToCalendar({ title: '提交项目书', due_date: '2026-10-23' }, {
+    success(value) { result = value; },
+    fail(error) { failure = error; },
+  });
+  assert.equal(failure, undefined);
+  assert.equal(result.requiresSave, true);
+  assert.equal(opened.action, 'android.intent.action.INSERT');
+  assert.equal(opened.uri, 'content://com.android.calendar/events');
+  assert.equal(opened.extras.title, '提交项目书');
+  assert.equal(opened.extras.beginTime, new Date(2026, 9, 23, 9).getTime());
+  assert.equal(opened.extras.allDay, false);
+});
+
+test('non-Android runtimes explain that a phone calendar app is required', () => {
+  globalThis.uni = {};
+  delete globalThis.plus;
   let failure;
   addTaskToCalendar({ title: '提交项目书', due_date: '2026-10-23' }, {
     success() {},
     fail(error) { failure = error; },
   });
-  assert.match(failure.message, /安装最新版知行/);
+  assert.match(failure.message, /安卓知行 App/);
 });
