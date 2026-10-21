@@ -14,7 +14,7 @@
             <textarea v-model="text" class="notice-input" :maxlength="12000" :disabled="busy || fileBusy" placeholder="粘贴校园通知，或从文件中导入…&#10;&#10;例如：请于10月23日前提交项目书，答辩时间另行通知。" placeholder-style="color: #a6aea0; line-height: 1.9;" :auto-height="false" />
             <view class="input-footer"><text>{{ importedFile ? `已读取 ${importedFile}` : '内容仅由你主动提供' }}</text><text>{{ text.length }} / 12000</text></view>
           </view>
-          <view class="document-row"><button class="secondary-button document-button" :disabled="busy || fileBusy" @click="chooseDocument"><Icon name="paper" :size="16" />{{ fileBusy ? '正在读取文档…' : '导入 Word / PDF' }}</button><text class="document-hint">支持 .doc、.docx 和 PDF（扫描件最多识别 5 页），单个文件不超过 20 MB；仅本次读取</text></view>
+          <view class="document-row"><button class="secondary-button document-button" :disabled="busy || fileBusy" @click="chooseDocument"><Icon name="paper" :size="16" />{{ fileBusy ? '正在读取文档…' : '导入 Word / PDF' }}</button><text class="document-hint">支持 .doc、.docx 和 PDF（扫描件最多识别 10 页），单个文件不超过 20 MB；仅本次读取</text></view>
           <view class="sample-row"><text class="sample-prefix">试一试</text><button v-for="sample in SAMPLES" :key="sample.id" class="sample-button" :disabled="busy" @click="fillSample(sample)">{{ sample.label }}<text class="sample-arrow">↗</text></button></view>
           <view class="source-time-row"><Icon name="clock" :size="15" color="#8b9585" /><input v-model="published" :disabled="busy" class="source-time-input" placeholder="通知发布时间（选填，如 2026-10-20 09:00）" :maxlength="16" /></view>
           <text class="field-hint">相对日期需要通知的发布时间；留空时会标记为待确认。</text>

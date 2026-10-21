@@ -102,7 +102,7 @@ export function extractDocument(connection, filePath, filename = '') {
             return;
           }
           uni.request({
-            url: `${url}-raw?filename=${encodeURIComponent(filename)}`, method: 'POST', data, timeout: 55000,
+            url: `${url}-raw?filename=${encodeURIComponent(filename)}`, method: 'POST', data, timeout: 70000,
             header: { 'Content-Type': 'application/octet-stream', ...authorizationHeader(connection) },
             success(response) { try { resolve(decodeDocumentResponse(response)); } catch (error) { reject(error); } },
             fail(error) { reject(new Error(error.errMsg?.includes('timeout') ? '文档处理超时，请尝试较小的文件' : '文档上传失败，请检查服务器连接')); },
@@ -112,7 +112,7 @@ export function extractDocument(connection, filePath, filename = '') {
       return;
     }
     uni.uploadFile({
-      url, filePath, name: 'file', timeout: 55000,
+      url, filePath, name: 'file', timeout: 70000,
       header: authorizationHeader(connection),
       success(response) {
         try { resolve(decodeDocumentResponse(response)); } catch (error) { reject(error); }

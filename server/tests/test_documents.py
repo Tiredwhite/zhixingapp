@@ -124,6 +124,27 @@ def test_scanned_pdf_explains_missing_ocr_runtime(monkeypatch):
         raise AssertionError('scanned PDFs must explain when OCR is not available')
 
 
+def test_scanned_pdf_limit_is_ten_pages():
+    image = bytes.fromhex(
+        '89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c489'
+        '0000000b49444154789c636000020000050001a5f645400000000049454e44ae426082'
+    )
+    pdf = fitz.open()
+    for _ in range(11):
+        page = pdf.new_page(width=200, height=100)
+        page.insert_image(fitz.Rect(0, 0, 200, 100), stream=image)
+    data = pdf.tobytes()
+    pdf.close()
+    try:
+        documents.extract_document('长扫描通知.pdf', data)
+    except documents.ApiError as error:
+        assert error.status == 422
+        assert error.code == 'DOCUMENT_OCR_TOO_MANY_PAGES'
+        assert '10 页' in error.message
+    else:
+        raise AssertionError('more than ten image pages must be rejected before OCR')
+
+
 def test_legacy_doc_explains_when_server_converter_is_missing(monkeypatch):
     monkeypatch.setattr(documents.shutil, 'which', lambda _name: None)
     try:

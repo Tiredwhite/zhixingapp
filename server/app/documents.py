@@ -2,6 +2,8 @@ from io import BytesIO
 from pathlib import PurePath
 import shutil
 import subprocess
+import threading
+import time
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from zipfile import BadZipFile, ZipFile
@@ -14,10 +16,13 @@ from .errors import ApiError
 MAX_DOCUMENT_BYTES = 20 * 1024 * 1024
 MAX_EXTRACTED_CHARS = 12000
 MAX_PDF_PAGES = 80
-MAX_OCR_PAGES = 5
+MAX_OCR_PAGES = 10
+MAX_OCR_SECONDS = 50
+MAX_OCR_PAGE_SECONDS = 8
 MIN_PAGE_TEXT_FOR_OCR = 40
 MAX_DOCX_ENTRIES = 1000
 MAX_DOCX_UNPACKED_BYTES = 64 * 1024 * 1024
+_OCR_SLOT = threading.BoundedSemaphore(1)
 
 
 def _normalize_text(value: str) -> str:
@@ -25,7 +30,7 @@ def _normalize_text(value: str) -> str:
     return "\n".join(line for line in lines if line)
 
 
-def _ocr_pdf_pages(data: bytes, page_numbers: list[int]) -> dict[int, str]:
+def _ocr_pdf_pages_locked(data: bytes, page_numbers: list[int]) -> dict[int, str]:
     tesseract = shutil.which("tesseract")
     if not tesseract:
         raise ApiError(503, "DOCUMENT_OCR_UNAVAILABLE", "服务器 OCR 组件暂未就绪，请稍后重试")
@@ -36,9 +41,13 @@ def _ocr_pdf_pages(data: bytes, page_numbers: list[int]) -> dict[int, str]:
 
     recognized: dict[int, str] = {}
     try:
+        started = time.monotonic()
         with fitz.open(stream=data, filetype="pdf") as document:
             with TemporaryDirectory(prefix="zhixing-ocr-") as temporary:
                 for number in page_numbers:
+                    remaining = MAX_OCR_SECONDS - (time.monotonic() - started)
+                    if remaining <= 0:
+                        raise ApiError(422, "DOCUMENT_OCR_TIMEOUT", "扫描件处理时间较长，请拆分为更少页面后重试")
                     page = document[number]
                     image = Path(temporary) / f"page-{number + 1}.png"
                     page.get_pixmap(dpi=180, colorspace=fitz.csGRAY, alpha=False).save(image)
@@ -46,7 +55,7 @@ def _ocr_pdf_pages(data: bytes, page_numbers: list[int]) -> dict[int, str]:
                         [tesseract, str(image), "stdout", "-l", "chi_sim+eng", "--oem", "1", "--psm", "6"],
                         stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE,
-                        timeout=8,
+                        timeout=min(MAX_OCR_PAGE_SECONDS, remaining),
                         check=False,
                     )
                     if result.returncode != 0:
@@ -66,6 +75,16 @@ def _ocr_pdf_pages(data: bytes, page_numbers: list[int]) -> dict[int, str]:
     return recognized
 
 
+def _ocr_pdf_pages(data: bytes, page_numbers: list[int]) -> dict[int, str]:
+    # Tesseract is memory-heavy on small cloud instances; process one scanned PDF at a time.
+    if not _OCR_SLOT.acquire(blocking=False):
+        raise ApiError(429, "DOCUMENT_OCR_BUSY", "服务器正在识别另一份扫描件，请稍后重试", True)
+    try:
+        return _ocr_pdf_pages_locked(data, page_numbers)
+    finally:
+        _OCR_SLOT.release()
+
+
 def _extract_pdf(data: bytes) -> tuple[str, int]:
     try:
         reader = PdfReader(BytesIO(data), strict=False)
@@ -81,7 +100,7 @@ def _extract_pdf(data: bytes) -> tuple[str, int]:
             with fitz.open(stream=data, filetype="pdf") as document:
                 image_pages = [index for index in candidates if document[index].get_images(full=True)]
             if len(image_pages) > MAX_OCR_PAGES:
-                raise ApiError(422, "DOCUMENT_OCR_TOO_MANY_PAGES", "扫描版 PDF 单次最多识别 5 页，请拆分后再导入")
+                raise ApiError(422, "DOCUMENT_OCR_TOO_MANY_PAGES", "扫描版 PDF 单次最多识别 10 页，请拆分后再导入")
             if image_pages:
                 recognized = _ocr_pdf_pages(data, image_pages)
                 for index, text in recognized.items():
