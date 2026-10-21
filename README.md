@@ -27,7 +27,7 @@ HBuilderX 安装目录：`D:\code-app\HBuilderX.5.26.2026091802\HBuilderX`。在
 
 手机或新浏览器的“连接设置”需要填写服务器网址及应用连接令牌。部署者的连接信息单独保存在本机忽略目录 `.local/secrets/知行连接信息.txt`，不提交到仓库；不要将模型API密钥填写到前端。
 
-本地验签安装包：[知行0.3.8 APK](.local/release/zhixing-0.3.8.apk)。服务器更新完成后，下载入口为 [知行0.3.8 APK](https://tiredwhite.cn/downloads/zhixing-0.3.8.apk)；旧版仍保留在原下载地址。
+本地验签安装包：[知行0.3.8 APK](.local/release/zhixing-0.3.8.apk)。线上下载入口为 [知行0.3.8 APK](https://tiredwhite.cn/downloads/zhixing-0.3.8.apk)；旧版仍保留在原下载地址。
 
 ## 本机启动
 

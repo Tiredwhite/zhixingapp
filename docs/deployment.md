@@ -129,3 +129,7 @@ systemd 为active，公网 `/healthz` 返回 `version=0.3.3`、`ai_configured=tr
 - 修改服务端 `.env` 后重启API进程；不需要把密钥重新写入前端。
 - 调用额度是全局每日100次上游尝试，每次重试也计数；默认每令牌/来源IP每分钟5次。
 
+## 0.3.8 Android 日历修复发布（2026-10-21）
+
+更新网站静态资源和安卓安装包；未修改后端。发布前网站备份：`/var/www/zhixing-backup-20261021-0.3.8`。新 APK 位于 `/var/www/zhixing/downloads/zhixing-0.3.8.apk`，公网完整下载与本机 SHA-256 一致。网站下载页显示 Android 0.3.8，`nginx -t` 通过且 Nginx active。H5入口通过原子替换 `index.html` 生效，缓存校验时使用 `?release=038`。
+
