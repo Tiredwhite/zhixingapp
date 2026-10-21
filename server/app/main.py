@@ -5,16 +5,17 @@ from pathlib import Path
 from uuid import uuid4
 
 import sqlite3
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, File, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from .config import SERVER_ROOT, Settings
+from .documents import MAX_DOCUMENT_BYTES, extract_document
 from .errors import ApiError
 from .model import ModelClient
 from .quota import Quota, identity_hash
-from .schemas import DeepReadRequest, DeepReadResponse, ParseRequest, ParseResponse
+from .schemas import ChatRequest, ChatResponse, DeepReadRequest, DeepReadResponse, ParseRequest, ParseResponse
 from .service import ParseService
 
 logger = logging.getLogger('zhixing')
@@ -28,7 +29,7 @@ logger.propagate = False
 
 def create_app(settings: Settings | None = None, model_transport=None) -> FastAPI:
     settings = settings or Settings()
-    app = FastAPI(title='知行 API', version='0.2.0',
+    app = FastAPI(title='知行 API', version='0.3.1',
                   docs_url='/docs' if settings.app_env == 'development' else None,
                   redoc_url=None, openapi_url='/openapi.json' if settings.app_env == 'development' else None)
     app.state.settings = settings
@@ -98,6 +99,30 @@ def create_app(settings: Settings | None = None, model_transport=None) -> FastAP
         request.state.request_id = str(payload.request_id)
         identity, client_ip = authorize(request)
         return await service.deep_read(payload, identity, client_ip)
+
+    @app.post('/api/v1/documents/extract')
+    async def extract_notice_document(request: Request, file: UploadFile = File(...)):
+        authorize(request)
+        try:
+            raw = await file.read(MAX_DOCUMENT_BYTES + 1)
+            text, kind = extract_document(file.filename, raw)
+        finally:
+            await file.close()
+        return {'text': text, 'kind': kind, 'characters': len(text)}
+
+    @app.post('/api/v1/documents/extract-raw')
+    async def extract_notice_document_raw(request: Request):
+        authorize(request)
+        if not request.headers.get('content-type', '').startswith('application/octet-stream'):
+            raise ApiError(415, 'DOCUMENT_UNSUPPORTED', '请求文件类型不受支持')
+        raw = await request.body()
+        text, kind = extract_document(request.query_params.get('filename'), raw)
+        return {'text': text, 'kind': kind, 'characters': len(text)}
+
+    @app.post('/api/v1/chat', response_model=ChatResponse)
+    async def chat(payload: ChatRequest, request: Request):
+        identity, client_ip = authorize(request)
+        return await service.chat(payload, identity, client_ip)
 
     @app.get('/healthz')
     def health():

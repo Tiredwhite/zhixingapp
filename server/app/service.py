@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from uuid import uuid4
 
 from .errors import ApiError
-from .schemas import DeepReadRequest, DeepReadResponse, ParseRequest, ParseResponse
+from .schemas import ChatRequest, ChatResponse, DeepReadRequest, DeepReadResponse, ParseRequest, ParseResponse
 from .validation import validate_result
 
 
@@ -102,4 +102,17 @@ class ParseService:
         task.add_done_callback(lambda t: t.exception() if not t.cancelled() else None)
         self.cache[key] = Entry(fingerprint, now, task)
         return await asyncio.shield(task)
+
+    async def chat(self, request: ChatRequest, identity: str, ip: str):
+        self.quota.check_rate(identity, ip)
+        if not self.settings.model_api_key.get_secret_value():
+            raise ApiError(503, 'MODEL_NOT_CONFIGURED', 'AI 尚未配置，可稍后重试')
+        if self.active >= self.settings.max_concurrent_requests:
+            raise ApiError(429, 'SERVER_BUSY', '当前AI请求较多，请稍后再试', True)
+        self.active += 1
+        try:
+            result = await self.model.chat(request)
+            return ChatResponse(reply=result.reply, request_id=str(uuid4()), model_id=self.settings.model_id)
+        finally:
+            self.active -= 1
 

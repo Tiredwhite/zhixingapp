@@ -74,4 +74,4 @@ def test_deep_read_requires_token_and_strict_input_without_provider_call(setting
         payload = request_body()
         assert client.post('/api/v1/deep-read', json=payload).status_code == 401
         assert client.post('/api/v1/deep-read', json={**payload, 'actions': ['字' * 61]}, headers=AUTH).status_code == 400
-        assert client.post('/api/v1/deep-read', json={**payload, 'text': '字' * 2001}, headers=AUTH).status_code == 400
+        assert client.post('/api/v1/deep-read', json={**payload, 'text': '字' * 12001}, headers=AUTH).status_code == 400

@@ -37,7 +37,7 @@ def test_credentials_and_invalid_input_never_reach_provider(settings, payload):
     with TestClient(create_app(settings, httpx.MockTransport(forbidden))) as client:
         assert client.post('/api/v1/parse', json=payload).status_code == 401
         assert client.post('/api/v1/parse', json={**payload, 'text': ' '}, headers=AUTH).status_code == 400
-        assert client.post('/api/v1/parse', json={**payload, 'text': '字' * 2001}, headers=AUTH).status_code == 400
+        assert client.post('/api/v1/parse', json={**payload, 'text': '字' * 12001}, headers=AUTH).status_code == 400
         result = client.post('/api/v1/parse', json={**payload, 'extra': True}, headers=AUTH)
         assert result.status_code == 400
         assert 'text' not in result.json()

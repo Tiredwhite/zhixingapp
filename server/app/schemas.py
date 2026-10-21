@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 
 class StrictModel(BaseModel):
@@ -11,7 +11,7 @@ class StrictModel(BaseModel):
 
 class ParseRequest(StrictModel):
     request_id: UUID
-    text: str = Field(min_length=2, max_length=2000)
+    text: str = Field(min_length=2, max_length=12000)
     source_time: datetime | None = None
     timezone: Literal['Asia/Shanghai'] = 'Asia/Shanghai'
 
@@ -69,7 +69,7 @@ class ParseResponse(StrictModel):
 
 class DeepReadRequest(StrictModel):
     request_id: UUID
-    text: str = Field(min_length=2, max_length=2000)
+    text: str = Field(min_length=2, max_length=12000)
     actions: list[str] = Field(default_factory=list, max_length=5)
 
     @field_validator('actions')
@@ -103,4 +103,31 @@ class DeepReadResponse(DeepReadResult):
     model_id: str
     mode: Literal['ai_deep_read'] = 'ai_deep_read'
     cached: bool = False
+
+
+class ChatMessage(StrictModel):
+    role: Literal['user', 'assistant']
+    content: str = Field(min_length=1, max_length=2000)
+
+
+class ChatRequest(StrictModel):
+    messages: list[ChatMessage] = Field(min_length=1, max_length=10)
+
+    @model_validator(mode='after')
+    def bounded_conversation(self):
+        if self.messages[-1].role != 'user':
+            raise ValueError('最后一条消息必须来自用户')
+        if sum(len(message.content) for message in self.messages) > 9000:
+            raise ValueError('对话内容过长，请开始新对话')
+        return self
+
+
+class ChatResult(StrictModel):
+    reply: str = Field(min_length=1, max_length=1800)
+
+
+class ChatResponse(ChatResult):
+    request_id: str
+    model_id: str
+    mode: Literal['chat'] = 'chat'
 
