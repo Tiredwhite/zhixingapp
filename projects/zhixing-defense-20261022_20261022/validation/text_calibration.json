@@ -1,0 +1,70 @@
+{
+  "roles": {
+    "body": {
+      "family": "Microsoft YaHei, Arial, sans-serif",
+      "size": 24.0,
+      "weight": "normal",
+      "cjk_chars_per_100px": 3.9,
+      "latin_chars_per_100px": 8.1,
+      "caps_chars_per_100px": 7.5,
+      "digits_chars_per_100px": 7.1,
+      "citation_chars_per_100px": 7.5,
+      "script_clusters_per_100px": {},
+      "longest_planned_line": {
+        "px": 553.2,
+        "slide": "P02",
+        "text": "示例通知包含项目书PDF、日期和时刻、提交地点"
+      }
+    },
+    "title": {
+      "family": "Microsoft YaHei, Arial, sans-serif",
+      "size": 42.0,
+      "weight": "normal",
+      "cjk_chars_per_100px": 2.2,
+      "latin_chars_per_100px": 4.6,
+      "caps_chars_per_100px": 4.3,
+      "digits_chars_per_100px": 4.1,
+      "citation_chars_per_100px": 4.3,
+      "script_clusters_per_100px": {},
+      "longest_planned_line": {
+        "px": 712.3,
+        "slide": "P01",
+        "text": "知行：让校园通知变成可核对的行动"
+      }
+    },
+    "subtitle": {
+      "family": "Microsoft YaHei, Arial, sans-serif",
+      "size": 32.0,
+      "weight": "normal",
+      "cjk_chars_per_100px": 2.9,
+      "latin_chars_per_100px": 6.1,
+      "caps_chars_per_100px": 5.6,
+      "digits_chars_per_100px": 5.4,
+      "citation_chars_per_100px": 5.6,
+      "script_clusters_per_100px": {},
+      "longest_planned_line": {
+        "px": 1119.4,
+        "slide": "P02",
+        "text": "学生需要同时判断做什么、何时完成、准备什么，以及哪些内容仍未说明。"
+      }
+    },
+    "annotation": {
+      "family": "Microsoft YaHei, Arial, sans-serif",
+      "size": 18.0,
+      "weight": "normal",
+      "cjk_chars_per_100px": 5.2,
+      "latin_chars_per_100px": 10.8,
+      "caps_chars_per_100px": 10.0,
+      "digits_chars_per_100px": 9.5,
+      "citation_chars_per_100px": 10.0,
+      "script_clusters_per_100px": {},
+      "longest_planned_line": null
+    }
+  },
+  "script_samples": {},
+  "source": "spec_lock.md",
+  "generated_at": "2026-10-22T06:42:21Z",
+  "notes": [
+    "every role is measured at normal weight; recalibrate a role realized as bold deck-wide with --role NAME:FAMILY:SIZE:bold: bold widens Latin and digits about 7%, while the bundled advance table gives CJK one width for both weights"
+  ]
+}

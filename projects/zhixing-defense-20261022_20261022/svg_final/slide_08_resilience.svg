@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 720" data-pptx-page-role="content" font-family="Microsoft YaHei, Arial, sans-serif"><rect id="background" data-pptx-role="background" x="0" y="0" width="1280" height="720" fill="#F7FAFC" /><text fill="#13A89E" font-weight="bold" font-size="18" text-anchor="start" x="72" y="44">07 / 容错设计</text><text fill="#607789" font-weight="normal" font-size="18" text-anchor="end" x="1208" y="44">08</text><text fill="#12344D" font-weight="bold" font-size="42" text-anchor="start" x="72" y="112">失败时保留人工与本机路径</text><line x1="72" y1="148" x2="1208" y2="148" stroke="#D5E1E8" stroke-width="1" />
+  <g transform="translate(88, 201) scale(1.41667)" fill="none" stroke="#13A89E" stroke-width="2">
+    <path d="M11.46 20.846a12 12 0 0 1 -7.96 -14.846a12 12 0 0 0 8.5 -3a12 12 0 0 0 8.5 3a12 12 0 0 1 -.09 7.06" />
+    <path d="M15 19l2 2l4 -4" />
+  </g><text fill="#12344D" font-weight="bold" font-size="24" text-anchor="start" x="140" y="228">模型输出校验</text><text fill="#18232C" font-weight="normal" font-size="18" text-anchor="start" x="140" y="274">结构与原文引用逐项检查。</text><text fill="#18232C" font-weight="normal" font-size="18" text-anchor="start" x="140" y="304">深读不合格最多重试两次，</text><text fill="#18232C" font-weight="normal" font-size="18" text-anchor="start" x="140" y="334">仍失败就明确报错。</text><line x1="88" y1="374" x2="588" y2="374" stroke="#D5E1E8" stroke-width="1" />
+  <g transform="translate(666, 201) scale(1.41667)" fill="none" stroke="#F2B451" stroke-width="2">
+    <path d="M12 9v4" />
+    <path d="M10.363 3.591l-8.106 13.534a1.914 1.914 0 0 0 1.636 2.871h16.214a1.914 1.914 0 0 0 1.636 -2.87l-8.106 -13.536a1.914 1.914 0 0 0 -3.274 0" />
+    <path d="M12 16h.01" />
+  </g><text fill="#12344D" font-weight="bold" font-size="24" text-anchor="start" x="718" y="228">信息缺失</text><text fill="#18232C" font-weight="normal" font-size="18" text-anchor="start" x="718" y="274">原文没有时间就保留空缺。</text><text fill="#18232C" font-weight="normal" font-size="18" text-anchor="start" x="718" y="304">用户可查看原文、手动修改，</text><text fill="#18232C" font-weight="normal" font-size="18" text-anchor="start" x="718" y="334">再决定是否保存。</text><line x1="666" y1="374" x2="1166" y2="374" stroke="#D5E1E8" stroke-width="1" />
+  <g transform="translate(88, 413) scale(1.41667)" fill="none" stroke="#13A89E" stroke-width="2">
+    <path d="M9.615 20h-2.615a2 2 0 0 1 -2 -2v-12a2 2 0 0 1 2 -2h8a2 2 0 0 1 2 2v8" />
+    <path d="M14 19l2 2l4 -4" />
+    <path d="M9 8h4" />
+    <path d="M9 12h2" />
+  </g><text fill="#12344D" font-weight="bold" font-size="24" text-anchor="start" x="140" y="440">离线任务</text><text fill="#18232C" font-weight="normal" font-size="18" text-anchor="start" x="140" y="486">已保存任务留在本机。</text><text fill="#18232C" font-weight="normal" font-size="18" text-anchor="start" x="140" y="516">无网络时仍可查看和编辑，</text><text fill="#18232C" font-weight="normal" font-size="18" text-anchor="start" x="140" y="546">AI服务不可用会单独提示。</text><line x1="88" y1="586" x2="588" y2="586" stroke="#D5E1E8" stroke-width="1" />
+  <g transform="translate(666, 413) scale(1.41667)" fill="none" stroke="#13A89E" stroke-width="2">
+    <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+    <path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2" />
+    <path d="M9 9l1 0" />
+    <path d="M9 13l6 0" />
+    <path d="M9 17l6 0" />
+  </g><text fill="#12344D" font-weight="bold" font-size="24" text-anchor="start" x="718" y="440">文档边界</text><text fill="#18232C" font-weight="normal" font-size="18" text-anchor="start" x="718" y="486">单文件不超过20 MB。</text><text fill="#18232C" font-weight="normal" font-size="18" text-anchor="start" x="718" y="516">PDF最多80页；扫描OCR</text><text fill="#18232C" font-weight="normal" font-size="18" text-anchor="start" x="718" y="546">单次最多10页，效果受清晰度影响。</text><line x1="666" y1="586" x2="1166" y2="586" stroke="#D5E1E8" stroke-width="1" /><text fill="#607789" font-weight="normal" font-size="18" text-anchor="start" x="88" y="638">优先保留原文、错误提示和人工核对入口，不伪造完整答案。</text><line x1="72" y1="667" x2="1208" y2="667" stroke="#D5E1E8" stroke-width="1" /><text fill="#607789" font-weight="normal" font-size="18" text-anchor="start" x="72" y="697">知行 · 智能移动应用开发项目实践</text><text fill="#607789" font-weight="normal" font-size="18" text-anchor="end" x="1208" y="697">08 / 11</text></svg>

@@ -1,0 +1,924 @@
+{
+  "schema": "ppt-master.svg-quality-report.v1",
+  "stage": "final",
+  "target": "D:\\all-code\\smartAPP\\projects\\zhixing-defense-20261022_20261022",
+  "source_fingerprint": {
+    "algorithm": "sha256",
+    "digest": "bd2121016a11ada80cb2a04df89ce427b8d28e8da21938aa8f08f7d7e7304598",
+    "file_count": 11,
+    "files": [
+      {
+        "file": "slide_01_cover.svg",
+        "sha256": "8c8a82544d301524aa1a5cdf2748d64a94c0a32ed1cd5484a5cb793897eaea3f"
+      },
+      {
+        "file": "slide_02_problem.svg",
+        "sha256": "4f830e8bd8232be14ae156db062deeb839d72e5ace5ff9c92394284098119ff5"
+      },
+      {
+        "file": "slide_03_workflow.svg",
+        "sha256": "9a69f2e05e3c458379c22f11d1abcf0bae047b6a1a21e81fd16e385304ce8072"
+      },
+      {
+        "file": "slide_04_ai_deep_read.svg",
+        "sha256": "355bab84ad21855b3bfd98c823714333766b500a712b31a4e5b0f6da76d734af"
+      },
+      {
+        "file": "slide_05_evidence_review.svg",
+        "sha256": "e155be79fb12d05498ae6fb6b92a8c919b3a3a71762063fadb4d07d117b73d95"
+      },
+      {
+        "file": "slide_06_todo_calendar.svg",
+        "sha256": "94a9156ae08340feb2094f8909d109847b8337e047950dcce18ae16d7fba1e8f"
+      },
+      {
+        "file": "slide_07_architecture.svg",
+        "sha256": "937bd0e3147dae5e4b77911e14737992118b573c31b6279047648d7ba370fa2b"
+      },
+      {
+        "file": "slide_08_resilience.svg",
+        "sha256": "1e58c4f4d0d8aed4d055d58a143340bf43acc433e476d57287743aaf4b45268c"
+      },
+      {
+        "file": "slide_09_verification.svg",
+        "sha256": "c00126023ad27fce23f42c947f1c2b252df8a9967cf23af9c68a75b18827fd64"
+      },
+      {
+        "file": "slide_10_release_boundaries.svg",
+        "sha256": "7b31b3cba16f4dbc46e999e001761b4641360050eb0eab0d258bb54fb50474cf"
+      },
+      {
+        "file": "slide_11_conclusion.svg",
+        "sha256": "619788cda8c91bbfde93dc916a8a8cf303c6804993172b0cbccae46c666bde9a"
+      }
+    ]
+  },
+  "summary": {
+    "total": 11,
+    "passed": 0,
+    "warnings": 11,
+    "errors": 0
+  },
+  "issue_types": {},
+  "categories": {
+    "blocking": {
+      "count": 0,
+      "issues": []
+    },
+    "introduced": {
+      "count": 11,
+      "issues": [
+        {
+          "file": "slide_01_cover.svg",
+          "message": "26 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <line> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\""
+        },
+        {
+          "file": "slide_02_problem.svg",
+          "message": "28 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <text> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\""
+        },
+        {
+          "file": "slide_03_workflow.svg",
+          "message": "37 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <text> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\""
+        },
+        {
+          "file": "slide_04_ai_deep_read.svg",
+          "message": "24 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <text> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\""
+        },
+        {
+          "file": "slide_05_evidence_review.svg",
+          "message": "21 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <text> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\""
+        },
+        {
+          "file": "slide_06_todo_calendar.svg",
+          "message": "19 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <text> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\""
+        },
+        {
+          "file": "slide_07_architecture.svg",
+          "message": "26 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <text> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\""
+        },
+        {
+          "file": "slide_08_resilience.svg",
+          "message": "24 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <text> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\""
+        },
+        {
+          "file": "slide_09_verification.svg",
+          "message": "21 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <text> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\""
+        },
+        {
+          "file": "slide_10_release_boundaries.svg",
+          "message": "25 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <text> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\""
+        },
+        {
+          "file": "slide_11_conclusion.svg",
+          "message": "10 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <line> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\""
+        }
+      ]
+    },
+    "inherited": {
+      "count": 0,
+      "issues": []
+    },
+    "source-import": {
+      "count": 0,
+      "summary": {
+        "warning_count": 0,
+        "by_code": {}
+      }
+    }
+  },
+  "drift": {
+    "colors": {
+      "#FFFFFF": [
+        "slide_02_problem.svg",
+        "slide_03_workflow.svg",
+        "slide_04_ai_deep_read.svg",
+        "slide_05_evidence_review.svg",
+        "slide_06_todo_calendar.svg",
+        "slide_07_architecture.svg"
+      ]
+    },
+    "fonts": {},
+    "sizes": {
+      "48": [
+        "slide_01_cover.svg"
+      ],
+      "58": [
+        "slide_11_conclusion.svg"
+      ],
+      "68": [
+        "slide_01_cover.svg"
+      ],
+      "76": [
+        "slide_09_verification.svg"
+      ]
+    }
+  },
+  "carrier_receipt": {
+    "scope": "informational-not-a-quota",
+    "pages": 11,
+    "totals": {
+      "text_elements": 164,
+      "image_placements": 4,
+      "icons": 30,
+      "svg_geometry_elements": 74,
+      "preset_shapes": 0,
+      "page_frame_elements": 11,
+      "marker_uses": 0,
+      "inline_emphasis_runs": 0,
+      "gradient_uses": 0,
+      "filter_uses": 0,
+      "text_effects": 0
+    },
+    "pages_with": {
+      "images": 4,
+      "icons": 9,
+      "presets": 0,
+      "charts": 0,
+      "tables": 0,
+      "formulas": 0,
+      "inline_emphasis_runs": 0,
+      "gradient_uses": 0,
+      "filter_uses": 0,
+      "text_effects": 0
+    },
+    "relationship_pages": 0,
+    "geometry_elements": {
+      "circle": 11,
+      "ellipse": 0,
+      "line": 42,
+      "path": 0,
+      "polygon": 0,
+      "polyline": 0,
+      "rect": 21
+    },
+    "preset_names": {},
+    "native_objects": {
+      "chart": 0,
+      "formula_block": 0,
+      "formula_inline": 0,
+      "other": 0,
+      "table": 0
+    },
+    "image_page_max_frame_share_range": [
+      0.0598,
+      0.2807
+    ]
+  },
+  "project_issues": {
+    "template": [],
+    "animation": [],
+    "illustration": [],
+    "communication_trace": [],
+    "pptx_structure": []
+  },
+  "files": [
+    {
+      "file": "slide_01_cover.svg",
+      "path": "projects\\zhixing-defense-20261022_20261022\\svg_output\\slide_01_cover.svg",
+      "exists": true,
+      "errors": [],
+      "warnings": [
+        "26 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <line> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\""
+      ],
+      "info": {
+        "viewbox": "0 0 1280 720",
+        "carrier_receipt": {
+          "text_elements": 17,
+          "images": {
+            "placements": 0,
+            "files": [],
+            "max_frame_share": 0.0
+          },
+          "icons": 3,
+          "effects": {
+            "inline_emphasis_runs": 0,
+            "gradient_uses": 0,
+            "filter_uses": 0,
+            "text_effects": 0
+          },
+          "geometry": {
+            "svg_elements": {
+              "rect": 1,
+              "circle": 3,
+              "ellipse": 0,
+              "line": 3,
+              "polyline": 0,
+              "polygon": 0,
+              "path": 0
+            },
+            "preset_shapes": 0,
+            "preset_names": {},
+            "page_frame_elements": 1,
+            "marker_uses": {
+              "start": 0,
+              "mid": 0,
+              "end": 0
+            }
+          },
+          "native_objects": {
+            "chart": 0,
+            "table": 0,
+            "formula_block": 0,
+            "formula_inline": 0,
+            "other": 0
+          }
+        },
+        "fonts": [
+          "Microsoft YaHei, Arial, sans-serif"
+        ],
+        "text_elements": 17,
+        "tspan_elements": 19,
+        "sparse_typography_sizes": {
+          "48": 1,
+          "68": 1
+        }
+      },
+      "passed": true,
+      "source_sha256": "8c8a82544d301524aa1a5cdf2748d64a94c0a32ed1cd5484a5cb793897eaea3f"
+    },
+    {
+      "file": "slide_02_problem.svg",
+      "path": "projects\\zhixing-defense-20261022_20261022\\svg_output\\slide_02_problem.svg",
+      "exists": true,
+      "errors": [],
+      "warnings": [
+        "28 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <text> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\""
+      ],
+      "info": {
+        "viewbox": "0 0 1280 720",
+        "carrier_receipt": {
+          "text_elements": 16,
+          "images": {
+            "placements": 1,
+            "files": [
+              "home-current.png"
+            ],
+            "max_frame_share": 0.0646
+          },
+          "icons": 4,
+          "effects": {
+            "inline_emphasis_runs": 0,
+            "gradient_uses": 0,
+            "filter_uses": 0,
+            "text_effects": 0
+          },
+          "geometry": {
+            "svg_elements": {
+              "rect": 4,
+              "circle": 0,
+              "ellipse": 0,
+              "line": 4,
+              "polyline": 0,
+              "polygon": 0,
+              "path": 0
+            },
+            "preset_shapes": 0,
+            "preset_names": {},
+            "page_frame_elements": 1,
+            "marker_uses": {
+              "start": 0,
+              "mid": 0,
+              "end": 0
+            }
+          },
+          "native_objects": {
+            "chart": 0,
+            "table": 0,
+            "formula_block": 0,
+            "formula_inline": 0,
+            "other": 0
+          }
+        },
+        "fonts": [
+          "Microsoft YaHei, Arial, sans-serif"
+        ],
+        "text_elements": 16,
+        "tspan_elements": 17,
+        "contextual_values": {
+          "colors": [
+            "#FFFFFF"
+          ]
+        }
+      },
+      "passed": true,
+      "source_sha256": "4f830e8bd8232be14ae156db062deeb839d72e5ace5ff9c92394284098119ff5"
+    },
+    {
+      "file": "slide_03_workflow.svg",
+      "path": "projects\\zhixing-defense-20261022_20261022\\svg_output\\slide_03_workflow.svg",
+      "exists": true,
+      "errors": [],
+      "warnings": [
+        "37 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <text> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\""
+      ],
+      "info": {
+        "viewbox": "0 0 1280 720",
+        "carrier_receipt": {
+          "text_elements": 23,
+          "images": {
+            "placements": 0,
+            "files": [],
+            "max_frame_share": 0.0
+          },
+          "icons": 5,
+          "effects": {
+            "inline_emphasis_runs": 0,
+            "gradient_uses": 0,
+            "filter_uses": 0,
+            "text_effects": 0
+          },
+          "geometry": {
+            "svg_elements": {
+              "rect": 2,
+              "circle": 5,
+              "ellipse": 0,
+              "line": 3,
+              "polyline": 0,
+              "polygon": 0,
+              "path": 0
+            },
+            "preset_shapes": 0,
+            "preset_names": {},
+            "page_frame_elements": 1,
+            "marker_uses": {
+              "start": 0,
+              "mid": 0,
+              "end": 0
+            }
+          },
+          "native_objects": {
+            "chart": 0,
+            "table": 0,
+            "formula_block": 0,
+            "formula_inline": 0,
+            "other": 0
+          }
+        },
+        "fonts": [
+          "Microsoft YaHei, Arial, sans-serif"
+        ],
+        "text_elements": 23,
+        "tspan_elements": 28,
+        "contextual_values": {
+          "colors": [
+            "#FFFFFF"
+          ]
+        }
+      },
+      "passed": true,
+      "source_sha256": "9a69f2e05e3c458379c22f11d1abcf0bae047b6a1a21e81fd16e385304ce8072"
+    },
+    {
+      "file": "slide_04_ai_deep_read.svg",
+      "path": "projects\\zhixing-defense-20261022_20261022\\svg_output\\slide_04_ai_deep_read.svg",
+      "exists": true,
+      "errors": [],
+      "warnings": [
+        "24 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <text> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\""
+      ],
+      "info": {
+        "viewbox": "0 0 1280 720",
+        "carrier_receipt": {
+          "text_elements": 15,
+          "images": {
+            "placements": 1,
+            "files": [
+              "deep-read-mobile.png"
+            ],
+            "max_frame_share": 0.0598
+          },
+          "icons": 4,
+          "effects": {
+            "inline_emphasis_runs": 0,
+            "gradient_uses": 0,
+            "filter_uses": 0,
+            "text_effects": 0
+          },
+          "geometry": {
+            "svg_elements": {
+              "rect": 2,
+              "circle": 0,
+              "ellipse": 0,
+              "line": 3,
+              "polyline": 0,
+              "polygon": 0,
+              "path": 0
+            },
+            "preset_shapes": 0,
+            "preset_names": {},
+            "page_frame_elements": 1,
+            "marker_uses": {
+              "start": 0,
+              "mid": 0,
+              "end": 0
+            }
+          },
+          "native_objects": {
+            "chart": 0,
+            "table": 0,
+            "formula_block": 0,
+            "formula_inline": 0,
+            "other": 0
+          }
+        },
+        "fonts": [
+          "Microsoft YaHei, Arial, sans-serif"
+        ],
+        "text_elements": 15,
+        "tspan_elements": 15,
+        "contextual_values": {
+          "colors": [
+            "#FFFFFF"
+          ]
+        }
+      },
+      "passed": true,
+      "source_sha256": "355bab84ad21855b3bfd98c823714333766b500a712b31a4e5b0f6da76d734af"
+    },
+    {
+      "file": "slide_05_evidence_review.svg",
+      "path": "projects\\zhixing-defense-20261022_20261022\\svg_output\\slide_05_evidence_review.svg",
+      "exists": true,
+      "errors": [],
+      "warnings": [
+        "21 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <text> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\""
+      ],
+      "info": {
+        "viewbox": "0 0 1280 720",
+        "carrier_receipt": {
+          "text_elements": 15,
+          "images": {
+            "placements": 1,
+            "files": [
+              "review-live-ai.png"
+            ],
+            "max_frame_share": 0.2807
+          },
+          "icons": 0,
+          "effects": {
+            "inline_emphasis_runs": 0,
+            "gradient_uses": 0,
+            "filter_uses": 0,
+            "text_effects": 0
+          },
+          "geometry": {
+            "svg_elements": {
+              "rect": 2,
+              "circle": 0,
+              "ellipse": 0,
+              "line": 4,
+              "polyline": 0,
+              "polygon": 0,
+              "path": 0
+            },
+            "preset_shapes": 0,
+            "preset_names": {},
+            "page_frame_elements": 1,
+            "marker_uses": {
+              "start": 0,
+              "mid": 0,
+              "end": 0
+            }
+          },
+          "native_objects": {
+            "chart": 0,
+            "table": 0,
+            "formula_block": 0,
+            "formula_inline": 0,
+            "other": 0
+          }
+        },
+        "fonts": [
+          "Microsoft YaHei, Arial, sans-serif"
+        ],
+        "text_elements": 15,
+        "tspan_elements": 15,
+        "contextual_values": {
+          "colors": [
+            "#FFFFFF"
+          ]
+        }
+      },
+      "passed": true,
+      "source_sha256": "e155be79fb12d05498ae6fb6b92a8c919b3a3a71762063fadb4d07d117b73d95"
+    },
+    {
+      "file": "slide_06_todo_calendar.svg",
+      "path": "projects\\zhixing-defense-20261022_20261022\\svg_output\\slide_06_todo_calendar.svg",
+      "exists": true,
+      "errors": [],
+      "warnings": [
+        "19 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <text> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\""
+      ],
+      "info": {
+        "viewbox": "0 0 1280 720",
+        "carrier_receipt": {
+          "text_elements": 11,
+          "images": {
+            "placements": 1,
+            "files": [
+              "tasks-mobile.png"
+            ],
+            "max_frame_share": 0.113
+          },
+          "icons": 2,
+          "effects": {
+            "inline_emphasis_runs": 0,
+            "gradient_uses": 0,
+            "filter_uses": 0,
+            "text_effects": 0
+          },
+          "geometry": {
+            "svg_elements": {
+              "rect": 2,
+              "circle": 0,
+              "ellipse": 0,
+              "line": 4,
+              "polyline": 0,
+              "polygon": 0,
+              "path": 0
+            },
+            "preset_shapes": 0,
+            "preset_names": {},
+            "page_frame_elements": 1,
+            "marker_uses": {
+              "start": 0,
+              "mid": 0,
+              "end": 0
+            }
+          },
+          "native_objects": {
+            "chart": 0,
+            "table": 0,
+            "formula_block": 0,
+            "formula_inline": 0,
+            "other": 0
+          }
+        },
+        "fonts": [
+          "Microsoft YaHei, Arial, sans-serif"
+        ],
+        "text_elements": 11,
+        "tspan_elements": 14,
+        "contextual_values": {
+          "colors": [
+            "#FFFFFF"
+          ]
+        }
+      },
+      "passed": true,
+      "source_sha256": "94a9156ae08340feb2094f8909d109847b8337e047950dcce18ae16d7fba1e8f"
+    },
+    {
+      "file": "slide_07_architecture.svg",
+      "path": "projects\\zhixing-defense-20261022_20261022\\svg_output\\slide_07_architecture.svg",
+      "exists": true,
+      "errors": [],
+      "warnings": [
+        "26 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <text> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\""
+      ],
+      "info": {
+        "viewbox": "0 0 1280 720",
+        "carrier_receipt": {
+          "text_elements": 16,
+          "images": {
+            "placements": 0,
+            "files": [],
+            "max_frame_share": 0.0
+          },
+          "icons": 4,
+          "effects": {
+            "inline_emphasis_runs": 0,
+            "gradient_uses": 0,
+            "filter_uses": 0,
+            "text_effects": 0
+          },
+          "geometry": {
+            "svg_elements": {
+              "rect": 4,
+              "circle": 0,
+              "ellipse": 0,
+              "line": 3,
+              "polyline": 0,
+              "polygon": 0,
+              "path": 0
+            },
+            "preset_shapes": 0,
+            "preset_names": {},
+            "page_frame_elements": 1,
+            "marker_uses": {
+              "start": 0,
+              "mid": 0,
+              "end": 0
+            }
+          },
+          "native_objects": {
+            "chart": 0,
+            "table": 0,
+            "formula_block": 0,
+            "formula_inline": 0,
+            "other": 0
+          }
+        },
+        "fonts": [
+          "Microsoft YaHei, Arial, sans-serif"
+        ],
+        "text_elements": 16,
+        "tspan_elements": 21,
+        "contextual_values": {
+          "colors": [
+            "#FFFFFF"
+          ]
+        }
+      },
+      "passed": true,
+      "source_sha256": "937bd0e3147dae5e4b77911e14737992118b573c31b6279047648d7ba370fa2b"
+    },
+    {
+      "file": "slide_08_resilience.svg",
+      "path": "projects\\zhixing-defense-20261022_20261022\\svg_output\\slide_08_resilience.svg",
+      "exists": true,
+      "errors": [],
+      "warnings": [
+        "24 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <text> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\""
+      ],
+      "info": {
+        "viewbox": "0 0 1280 720",
+        "carrier_receipt": {
+          "text_elements": 14,
+          "images": {
+            "placements": 0,
+            "files": [],
+            "max_frame_share": 0.0
+          },
+          "icons": 4,
+          "effects": {
+            "inline_emphasis_runs": 0,
+            "gradient_uses": 0,
+            "filter_uses": 0,
+            "text_effects": 0
+          },
+          "geometry": {
+            "svg_elements": {
+              "rect": 1,
+              "circle": 0,
+              "ellipse": 0,
+              "line": 6,
+              "polyline": 0,
+              "polygon": 0,
+              "path": 0
+            },
+            "preset_shapes": 0,
+            "preset_names": {},
+            "page_frame_elements": 1,
+            "marker_uses": {
+              "start": 0,
+              "mid": 0,
+              "end": 0
+            }
+          },
+          "native_objects": {
+            "chart": 0,
+            "table": 0,
+            "formula_block": 0,
+            "formula_inline": 0,
+            "other": 0
+          }
+        },
+        "fonts": [
+          "Microsoft YaHei, Arial, sans-serif"
+        ],
+        "text_elements": 14,
+        "tspan_elements": 22
+      },
+      "passed": true,
+      "source_sha256": "1e58c4f4d0d8aed4d055d58a143340bf43acc433e476d57287743aaf4b45268c"
+    },
+    {
+      "file": "slide_09_verification.svg",
+      "path": "projects\\zhixing-defense-20261022_20261022\\svg_output\\slide_09_verification.svg",
+      "exists": true,
+      "errors": [],
+      "warnings": [
+        "21 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <text> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\""
+      ],
+      "info": {
+        "viewbox": "0 0 1280 720",
+        "carrier_receipt": {
+          "text_elements": 14,
+          "images": {
+            "placements": 0,
+            "files": [],
+            "max_frame_share": 0.0
+          },
+          "icons": 3,
+          "effects": {
+            "inline_emphasis_runs": 0,
+            "gradient_uses": 0,
+            "filter_uses": 0,
+            "text_effects": 0
+          },
+          "geometry": {
+            "svg_elements": {
+              "rect": 1,
+              "circle": 0,
+              "ellipse": 0,
+              "line": 4,
+              "polyline": 0,
+              "polygon": 0,
+              "path": 0
+            },
+            "preset_shapes": 0,
+            "preset_names": {},
+            "page_frame_elements": 1,
+            "marker_uses": {
+              "start": 0,
+              "mid": 0,
+              "end": 0
+            }
+          },
+          "native_objects": {
+            "chart": 0,
+            "table": 0,
+            "formula_block": 0,
+            "formula_inline": 0,
+            "other": 0
+          }
+        },
+        "fonts": [
+          "Microsoft YaHei, Arial, sans-serif"
+        ],
+        "text_elements": 14,
+        "tspan_elements": 17,
+        "sparse_typography_sizes": {
+          "76": 1
+        }
+      },
+      "passed": true,
+      "source_sha256": "c00126023ad27fce23f42c947f1c2b252df8a9967cf23af9c68a75b18827fd64"
+    },
+    {
+      "file": "slide_10_release_boundaries.svg",
+      "path": "projects\\zhixing-defense-20261022_20261022\\svg_output\\slide_10_release_boundaries.svg",
+      "exists": true,
+      "errors": [],
+      "warnings": [
+        "25 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <text> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\""
+      ],
+      "info": {
+        "viewbox": "0 0 1280 720",
+        "carrier_receipt": {
+          "text_elements": 16,
+          "images": {
+            "placements": 0,
+            "files": [],
+            "max_frame_share": 0.0
+          },
+          "icons": 0,
+          "effects": {
+            "inline_emphasis_runs": 0,
+            "gradient_uses": 0,
+            "filter_uses": 0,
+            "text_effects": 0
+          },
+          "geometry": {
+            "svg_elements": {
+              "rect": 1,
+              "circle": 3,
+              "ellipse": 0,
+              "line": 6,
+              "polyline": 0,
+              "polygon": 0,
+              "path": 0
+            },
+            "preset_shapes": 0,
+            "preset_names": {},
+            "page_frame_elements": 1,
+            "marker_uses": {
+              "start": 0,
+              "mid": 0,
+              "end": 0
+            }
+          },
+          "native_objects": {
+            "chart": 0,
+            "table": 0,
+            "formula_block": 0,
+            "formula_inline": 0,
+            "other": 0
+          }
+        },
+        "fonts": [
+          "Microsoft YaHei, Arial, sans-serif"
+        ],
+        "text_elements": 16,
+        "tspan_elements": 18
+      },
+      "passed": true,
+      "source_sha256": "7b31b3cba16f4dbc46e999e001761b4641360050eb0eab0d258bb54fb50474cf"
+    },
+    {
+      "file": "slide_11_conclusion.svg",
+      "path": "projects\\zhixing-defense-20261022_20261022\\svg_output\\slide_11_conclusion.svg",
+      "exists": true,
+      "errors": [],
+      "warnings": [
+        "10 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <line> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\""
+      ],
+      "info": {
+        "viewbox": "0 0 1280 720",
+        "carrier_receipt": {
+          "text_elements": 7,
+          "images": {
+            "placements": 0,
+            "files": [],
+            "max_frame_share": 0.0
+          },
+          "icons": 1,
+          "effects": {
+            "inline_emphasis_runs": 0,
+            "gradient_uses": 0,
+            "filter_uses": 0,
+            "text_effects": 0
+          },
+          "geometry": {
+            "svg_elements": {
+              "rect": 1,
+              "circle": 0,
+              "ellipse": 0,
+              "line": 2,
+              "polyline": 0,
+              "polygon": 0,
+              "path": 0
+            },
+            "preset_shapes": 0,
+            "preset_names": {},
+            "page_frame_elements": 1,
+            "marker_uses": {
+              "start": 0,
+              "mid": 0,
+              "end": 0
+            }
+          },
+          "native_objects": {
+            "chart": 0,
+            "table": 0,
+            "formula_block": 0,
+            "formula_inline": 0,
+            "other": 0
+          }
+        },
+        "fonts": [
+          "Microsoft YaHei, Arial, sans-serif"
+        ],
+        "text_elements": 7,
+        "tspan_elements": 8,
+        "sparse_typography_sizes": {
+          "58": 2
+        }
+      },
+      "passed": true,
+      "source_sha256": "619788cda8c91bbfde93dc916a8a8cf303c6804993172b0cbccae46c666bde9a"
+    }
+  ]
+}

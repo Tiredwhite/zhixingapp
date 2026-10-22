@@ -1,0 +1,267 @@
+{
+  "schema": "ppt-master.pptx-postflight-report.v1",
+  "status": "passed-with-warnings",
+  "output": {
+    "path": "D:\\all-code\\smartAPP\\projects\\zhixing-defense-20261022_20261022\\exports\\zhixing-defense-20261022.pptx",
+    "bytes": 462583
+  },
+  "source": {
+    "svg_slide_count": 11,
+    "layout_definition_count": 0,
+    "fingerprint": {
+      "algorithm": "sha256",
+      "digest": "bd2121016a11ada80cb2a04df89ce427b8d28e8da21938aa8f08f7d7e7304598",
+      "file_count": 11,
+      "files": [
+        {
+          "file": "slide_01_cover.svg",
+          "sha256": "8c8a82544d301524aa1a5cdf2748d64a94c0a32ed1cd5484a5cb793897eaea3f"
+        },
+        {
+          "file": "slide_02_problem.svg",
+          "sha256": "4f830e8bd8232be14ae156db062deeb839d72e5ace5ff9c92394284098119ff5"
+        },
+        {
+          "file": "slide_03_workflow.svg",
+          "sha256": "9a69f2e05e3c458379c22f11d1abcf0bae047b6a1a21e81fd16e385304ce8072"
+        },
+        {
+          "file": "slide_04_ai_deep_read.svg",
+          "sha256": "355bab84ad21855b3bfd98c823714333766b500a712b31a4e5b0f6da76d734af"
+        },
+        {
+          "file": "slide_05_evidence_review.svg",
+          "sha256": "e155be79fb12d05498ae6fb6b92a8c919b3a3a71762063fadb4d07d117b73d95"
+        },
+        {
+          "file": "slide_06_todo_calendar.svg",
+          "sha256": "94a9156ae08340feb2094f8909d109847b8337e047950dcce18ae16d7fba1e8f"
+        },
+        {
+          "file": "slide_07_architecture.svg",
+          "sha256": "937bd0e3147dae5e4b77911e14737992118b573c31b6279047648d7ba370fa2b"
+        },
+        {
+          "file": "slide_08_resilience.svg",
+          "sha256": "1e58c4f4d0d8aed4d055d58a143340bf43acc433e476d57287743aaf4b45268c"
+        },
+        {
+          "file": "slide_09_verification.svg",
+          "sha256": "c00126023ad27fce23f42c947f1c2b252df8a9967cf23af9c68a75b18827fd64"
+        },
+        {
+          "file": "slide_10_release_boundaries.svg",
+          "sha256": "7b31b3cba16f4dbc46e999e001761b4641360050eb0eab0d258bb54fb50474cf"
+        },
+        {
+          "file": "slide_11_conclusion.svg",
+          "sha256": "619788cda8c91bbfde93dc916a8a8cf303c6804993172b0cbccae46c666bde9a"
+        }
+      ]
+    },
+    "authoring_roundtrip": null
+  },
+  "package": {
+    "zip_integrity": "passed",
+    "corrupt_member": null,
+    "slides": 11,
+    "notes": 11,
+    "masters": 1,
+    "layouts": 1
+  },
+  "checks": {
+    "zip_integrity": "passed",
+    "slide_count": "passed",
+    "internal_relationships": "enforced-at-build",
+    "structured_package": "not-applicable",
+    "transitions": "enforced-at-build",
+    "animations": "enforced-at-build",
+    "project_svg_contract": "enforced-at-build",
+    "compatibility_normalization": "not-applicable",
+    "authoring_roundtrip": "not-applicable",
+    "quality_gate": "passed",
+    "quality_warnings": "warning",
+    "template_tokens": "passed",
+    "external_images": "passed",
+    "font_portability": "passed"
+  },
+  "quality": {
+    "status": "loaded",
+    "path": "D:\\all-code\\smartAPP\\projects\\zhixing-defense-20261022_20261022\\validation\\svg_quality_report.json",
+    "schema": "ppt-master.svg-quality-report.v1",
+    "stage": "final",
+    "source_match": "passed",
+    "source_fingerprint": {
+      "algorithm": "sha256",
+      "digest": "bd2121016a11ada80cb2a04df89ce427b8d28e8da21938aa8f08f7d7e7304598",
+      "file_count": 11,
+      "files": [
+        {
+          "file": "slide_01_cover.svg",
+          "sha256": "8c8a82544d301524aa1a5cdf2748d64a94c0a32ed1cd5484a5cb793897eaea3f"
+        },
+        {
+          "file": "slide_02_problem.svg",
+          "sha256": "4f830e8bd8232be14ae156db062deeb839d72e5ace5ff9c92394284098119ff5"
+        },
+        {
+          "file": "slide_03_workflow.svg",
+          "sha256": "9a69f2e05e3c458379c22f11d1abcf0bae047b6a1a21e81fd16e385304ce8072"
+        },
+        {
+          "file": "slide_04_ai_deep_read.svg",
+          "sha256": "355bab84ad21855b3bfd98c823714333766b500a712b31a4e5b0f6da76d734af"
+        },
+        {
+          "file": "slide_05_evidence_review.svg",
+          "sha256": "e155be79fb12d05498ae6fb6b92a8c919b3a3a71762063fadb4d07d117b73d95"
+        },
+        {
+          "file": "slide_06_todo_calendar.svg",
+          "sha256": "94a9156ae08340feb2094f8909d109847b8337e047950dcce18ae16d7fba1e8f"
+        },
+        {
+          "file": "slide_07_architecture.svg",
+          "sha256": "937bd0e3147dae5e4b77911e14737992118b573c31b6279047648d7ba370fa2b"
+        },
+        {
+          "file": "slide_08_resilience.svg",
+          "sha256": "1e58c4f4d0d8aed4d055d58a143340bf43acc433e476d57287743aaf4b45268c"
+        },
+        {
+          "file": "slide_09_verification.svg",
+          "sha256": "c00126023ad27fce23f42c947f1c2b252df8a9967cf23af9c68a75b18827fd64"
+        },
+        {
+          "file": "slide_10_release_boundaries.svg",
+          "sha256": "7b31b3cba16f4dbc46e999e001761b4641360050eb0eab0d258bb54fb50474cf"
+        },
+        {
+          "file": "slide_11_conclusion.svg",
+          "sha256": "619788cda8c91bbfde93dc916a8a8cf303c6804993172b0cbccae46c666bde9a"
+        }
+      ]
+    },
+    "summary": {
+      "total": 11,
+      "passed": 0,
+      "warnings": 11,
+      "errors": 0
+    },
+    "categories": {
+      "blocking": {
+        "count": 0,
+        "issues": []
+      },
+      "introduced": {
+        "count": 11,
+        "issues": [
+          {
+            "file": "slide_01_cover.svg",
+            "message": "26 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <line> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\""
+          },
+          {
+            "file": "slide_02_problem.svg",
+            "message": "28 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <text> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\""
+          },
+          {
+            "file": "slide_03_workflow.svg",
+            "message": "37 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <text> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\""
+          },
+          {
+            "file": "slide_04_ai_deep_read.svg",
+            "message": "24 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <text> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\""
+          },
+          {
+            "file": "slide_05_evidence_review.svg",
+            "message": "21 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <text> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\""
+          },
+          {
+            "file": "slide_06_todo_calendar.svg",
+            "message": "19 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <text> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\""
+          },
+          {
+            "file": "slide_07_architecture.svg",
+            "message": "26 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <text> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\""
+          },
+          {
+            "file": "slide_08_resilience.svg",
+            "message": "24 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <text> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\""
+          },
+          {
+            "file": "slide_09_verification.svg",
+            "message": "21 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <text> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\""
+          },
+          {
+            "file": "slide_10_release_boundaries.svg",
+            "message": "25 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <text> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\""
+          },
+          {
+            "file": "slide_11_conclusion.svg",
+            "message": "10 ungrouped top-level Slide-local element(s) in svg_output (<text> #2, <text> #3, <line> #4, ...); group only logical content units in a top-level <g id=\"...\">. Keep genuine static page framing as a root primitive and declare a supported data-pptx-role such as \"background\" or \"decoration\""
+          }
+        ]
+      },
+      "inherited": {
+        "count": 0,
+        "issues": []
+      },
+      "source-import": {
+        "count": 0,
+        "summary": {
+          "warning_count": 0,
+          "by_code": {}
+        }
+      }
+    }
+  },
+  "resources": {
+    "unresolved_template_tokens": [],
+    "fonts": {
+      "stacks": [
+        "Microsoft YaHei, Arial, sans-serif"
+      ],
+      "generic_only_stacks": [],
+      "unsafe_exported_faces": []
+    },
+    "images": {
+      "data_uri": 0,
+      "local": 4,
+      "external": 0,
+      "external_references": []
+    }
+  },
+  "export_policy": {
+    "project_svg_contract": "strict",
+    "dangerous_normalization_count": 0
+  },
+  "deck_motion": {
+    "transition": {
+      "effect": null,
+      "effect_options": {},
+      "duration": 0.4,
+      "auto_advance": null,
+      "sound": null
+    },
+    "animation": {
+      "effect": "none",
+      "effect_request": null,
+      "duration": 0.4,
+      "stagger": 0.5,
+      "trigger": "after-previous"
+    },
+    "cli_overrides": {
+      "transition": false,
+      "transition_duration": false,
+      "auto_advance": false,
+      "transition_sound": false,
+      "animation": false,
+      "animation_duration": false,
+      "animation_stagger": false,
+      "animation_trigger": false
+    },
+    "narration_timings": false
+  },
+  "backup_path": null,
+  "conversion_trace_path": null
+}
